@@ -1,0 +1,16 @@
+SYNTHETIC DATA — FICTIONAL PATIENT — NOT FOR CLINICAL USE
+NOTE_ID: note_02
+CASE: case_001 (Synthetic Patient 001)
+DATE: 2026-03-02 (Hospital Day 1)
+TYPE: Night shift nursing note
+AUTHOR ROLE: Registered nurse (synthetic)
+
+Arrival: Patient arrived on the ward from the emergency department at 21:30. Oriented to room and call bell.
+
+Respiratory: Oxygen 2 L/min by nasal cannula, saturation 94%. Productive cough, sputum sample collected and sent at 22:00.
+
+Medications: First dose of intravenous Antibiotic B given at 22:15. No reaction observed.
+
+Vital signs at 23:00: Temperature 38.4 C. Heart rate 98. Blood pressure 128/76. Respiratory rate 22.
+
+Overnight: Patient rested intermittently. Repositioned for comfort. No acute events.

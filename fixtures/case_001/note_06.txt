@@ -1,0 +1,28 @@
+SYNTHETIC DATA — FICTIONAL PATIENT — NOT FOR CLINICAL USE
+NOTE_ID: note_06
+CASE: case_001 (Synthetic Patient 001)
+DATE: 2026-03-05 (Hospital Day 4)
+TYPE: Discharge day progress note
+AUTHOR ROLE: Ward resident (synthetic)
+
+Subjective: Patient reports mild residual cough, no shortness of breath at rest. Eating and sleeping well.
+
+Vital signs: Afebrile for 48 hours, maximum temperature 37.1 C. Heart rate 76. Blood pressure 122/70. Respiratory rate 16. Oxygen saturation 96% on room air.
+
+Physical exam: Faint crackles over the right lower chest. Ambulating independently.
+
+Microbiology: Blood cultures no growth to date; final results pending at discharge. Sputum culture: normal respiratory flora.
+
+Current medications: Oral Antibiotic B. Medication A daily.
+
+Assessment documented: Community-acquired pneumonia, improved. Hypertension.
+
+Condition at discharge documented: Clinically stable, improved.
+
+Plan documented:
+1. Discharge home today.
+2. Pneumonia: Complete oral Antibiotic B for a total of 7 days of antibiotic therapy.
+3. Hypertension: Medication A continued.
+4. Follow up with primary care clinic in 1 week.
+5. Repeat chest X-ray in 6 weeks.
+6. Final blood culture results pending at discharge; primary care clinic to follow up.

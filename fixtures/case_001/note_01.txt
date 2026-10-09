@@ -1,0 +1,30 @@
+SYNTHETIC DATA — FICTIONAL PATIENT — NOT FOR CLINICAL USE
+NOTE_ID: note_01
+CASE: case_001 (Synthetic Patient 001)
+DATE: 2026-03-02 (Hospital Day 1)
+TYPE: Admission note
+AUTHOR ROLE: Admitting resident (synthetic)
+
+Chief complaint: Cough, fever and shortness of breath for three days.
+
+History of present illness: Synthetic Patient 001 is a fictional 64-year-old adult who presented to the emergency department with three days of productive cough with yellow sputum, subjective fevers and increasing shortness of breath on exertion. Denies chest pain. No recent travel or hospitalization documented.
+
+Past history documented: Hypertension. No known drug allergies.
+
+Home medications documented: Medication A 5 mg daily.
+
+Vital signs: Temperature 38.9 C. Heart rate 104. Blood pressure 132/78. Respiratory rate 24. Oxygen saturation 90% on room air.
+
+Physical exam: Alert and oriented. Crackles over the right lower chest. No leg swelling.
+
+Laboratory results: White blood cell count 15.2 x10^9/L. C-reactive protein 142 mg/L. Creatinine 0.9 mg/dL.
+
+Imaging: Chest X-ray shows right lower lobe consolidation. No pleural effusion.
+
+Assessment documented: Community-acquired pneumonia, right lower lobe. Hypertension.
+
+Plan documented:
+1. Pneumonia: Admit to medical ward. Start intravenous Antibiotic B. Blood cultures drawn before first antibiotic dose. Sputum culture requested.
+2. Hypoxemia: Supplemental oxygen by nasal cannula to keep saturation above 92%.
+3. Hypertension: Medication A 5 mg daily ordered.
+4. Code status: Full code.

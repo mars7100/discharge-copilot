@@ -1,0 +1,25 @@
+SYNTHETIC DATA — FICTIONAL PATIENT — NOT FOR CLINICAL USE
+NOTE_ID: note_03
+CASE: case_001 (Synthetic Patient 001)
+DATE: 2026-03-03 (Hospital Day 2)
+TYPE: Daily progress note
+AUTHOR ROLE: Ward resident (synthetic)
+
+Subjective: Patient reports less shortness of breath than on admission. Cough persists with yellow sputum. Slept poorly.
+
+Vital signs: Maximum temperature 37.9 C, afebrile since 06:00. Heart rate 88. Blood pressure 126/74. Respiratory rate 18. Oxygen saturation 95% on 1 L/min nasal cannula.
+
+Physical exam: Crackles over the right lower chest, reduced compared with admission.
+
+Laboratory results: White blood cell count 12.1 x10^9/L. C-reactive protein 96 mg/L.
+
+Microbiology: Blood cultures no growth to date. Sputum culture pending.
+
+Current medications: Intravenous Antibiotic B. Medication A 5 mg daily.
+
+Assessment documented: Community-acquired pneumonia, improving. Hypertension.
+
+Plan documented:
+1. Pneumonia: Continue intravenous Antibiotic B. Follow cultures.
+2. Hypoxemia: Oxygen weaned to 1 L/min; continue weaning as tolerated.
+3. Hypertension: Medication A 5 mg daily continued.

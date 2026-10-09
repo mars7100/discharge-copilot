@@ -1,0 +1,354 @@
+{
+  "events": [
+    {
+      "event_id": "e1",
+      "date_or_hospital_day": "2026-03-02 (Hospital Day 1)",
+      "category": "presentation",
+      "statement": "Presented with three days of productive cough with yellow sputum, subjective fevers, and increasing shortness of breath on exertion; denied chest pain.",
+      "evidence": [
+        {
+          "span_id": "note_01_p01_b03",
+          "quote": "presented to the emergency department with three days of productive cough with yellow sputum, subjective fevers and increasing shortness of breath on exertion. Denies chest pain.",
+          "start": null
+        }
+      ],
+      "needs_review": false
+    },
+    {
+      "event_id": "e2",
+      "date_or_hospital_day": "2026-03-02 (Hospital Day 1)",
+      "category": "test_result_documented",
+      "statement": "Chest X-ray showed right lower lobe consolidation and no pleural effusion.",
+      "evidence": [
+        {
+          "span_id": "note_01_p01_b09",
+          "quote": "Chest X-ray shows right lower lobe consolidation. No pleural effusion.",
+          "start": null
+        }
+      ],
+      "needs_review": false
+    },
+    {
+      "event_id": "e3",
+      "date_or_hospital_day": "2026-03-02 (Hospital Day 1)",
+      "category": "test_result_documented",
+      "statement": "White blood cell count was 15.2 x10^9/L, C-reactive protein was 142 mg/L, and creatinine was 0.9 mg/dL.",
+      "evidence": [
+        {
+          "span_id": "note_01_p01_b08",
+          "quote": "White blood cell count 15.2 x10^9/L. C-reactive protein 142 mg/L. Creatinine 0.9 mg/dL.",
+          "start": null
+        }
+      ],
+      "needs_review": false
+    },
+    {
+      "event_id": "e4",
+      "date_or_hospital_day": "2026-03-02 (Hospital Day 1)",
+      "category": "assessment_documented",
+      "statement": "Community-acquired pneumonia, right lower lobe, and hypertension were documented.",
+      "evidence": [
+        {
+          "span_id": "note_01_p01_b10",
+          "quote": "Assessment documented: Community-acquired pneumonia, right lower lobe. Hypertension.",
+          "start": null
+        }
+      ],
+      "needs_review": false
+    },
+    {
+      "event_id": "e5",
+      "date_or_hospital_day": "2026-03-02 (Hospital Day 1)",
+      "category": "treatment_documented",
+      "statement": "Admitted to the medical ward and started intravenous Antibiotic B; blood cultures were drawn before the first antibiotic dose and sputum culture was requested.",
+      "evidence": [
+        {
+          "span_id": "note_01_p01_b11",
+          "quote": "Pneumonia: Admit to medical ward. Start intravenous Antibiotic B. Blood cultures drawn before first antibiotic dose. Sputum culture requested.",
+          "start": null
+        }
+      ],
+      "needs_review": false
+    },
+    {
+      "event_id": "e6",
+      "date_or_hospital_day": "2026-03-02 (Hospital Day 1)",
+      "category": "treatment_documented",
+      "statement": "Supplemental oxygen by nasal cannula was planned to keep saturation above 92%; the night nursing note documented oxygen at 2 L/min with saturation 94%.",
+      "evidence": [
+        {
+          "span_id": "note_01_p01_b11",
+          "quote": "Hypoxemia: Supplemental oxygen by nasal cannula to keep saturation above 92%.",
+          "start": null
+        },
+        {
+          "span_id": "note_02_p01_b03",
+          "quote": "Oxygen 2 L/min by nasal cannula, saturation 94%.",
+          "start": null
+        }
+      ],
+      "needs_review": false
+    },
+    {
+      "event_id": "e7",
+      "date_or_hospital_day": "2026-03-02 (Hospital Day 1)",
+      "category": "treatment_documented",
+      "statement": "Medication A 5 mg daily was ordered for hypertension; the night nursing note documented administration of the first dose of intravenous Antibiotic B at 22:15 with no reaction observed.",
+      "evidence": [
+        {
+          "span_id": "note_01_p01_b11",
+          "quote": "Hypertension: Medication A 5 mg daily ordered.",
+          "start": null
+        },
+        {
+          "span_id": "note_02_p01_b04",
+          "quote": "First dose of intravenous Antibiotic B given at 22:15. No reaction observed.",
+          "start": null
+        }
+      ],
+      "needs_review": false
+    },
+    {
+      "event_id": "e8",
+      "date_or_hospital_day": "2026-03-03 (Hospital Day 2)",
+      "category": "status",
+      "statement": "Patient reported less shortness of breath than on admission, with persistent cough and yellow sputum.",
+      "evidence": [
+        {
+          "span_id": "note_03_p01_b02",
+          "quote": "Patient reports less shortness of breath than on admission. Cough persists with yellow sputum.",
+          "start": null
+        }
+      ],
+      "needs_review": false
+    },
+    {
+      "event_id": "e9",
+      "date_or_hospital_day": "2026-03-03 (Hospital Day 2)",
+      "category": "test_result_documented",
+      "statement": "White blood cell count was 12.1 x10^9/L and C-reactive protein was 96 mg/L; blood cultures showed no growth to date and sputum culture was pending.",
+      "evidence": [
+        {
+          "span_id": "note_03_p01_b05",
+          "quote": "White blood cell count 12.1 x10^9/L. C-reactive protein 96 mg/L.",
+          "start": null
+        },
+        {
+          "span_id": "note_03_p01_b06",
+          "quote": "Blood cultures no growth to date. Sputum culture pending.",
+          "start": null
+        }
+      ],
+      "needs_review": false
+    },
+    {
+      "event_id": "e10",
+      "date_or_hospital_day": "2026-03-03 (Hospital Day 2)",
+      "category": "assessment_documented",
+      "statement": "Community-acquired pneumonia was documented as improving; hypertension was also documented.",
+      "evidence": [
+        {
+          "span_id": "note_03_p01_b08",
+          "quote": "Community-acquired pneumonia, improving. Hypertension.",
+          "start": null
+        }
+      ],
+      "needs_review": false
+    },
+    {
+      "event_id": "e11",
+      "date_or_hospital_day": "2026-03-03 (Hospital Day 2)",
+      "category": "treatment_documented",
+      "statement": "Intravenous Antibiotic B was continued, and oxygen was weaned to 1 L/min with further weaning as tolerated planned.",
+      "evidence": [
+        {
+          "span_id": "note_03_p01_b09",
+          "quote": "Pneumonia: Continue intravenous Antibiotic B. Follow cultures.",
+          "start": null
+        },
+        {
+          "span_id": "note_03_p01_b09",
+          "quote": "Hypoxemia: Oxygen weaned to 1 L/min; continue weaning as tolerated.",
+          "start": null
+        }
+      ],
+      "needs_review": false
+    },
+    {
+      "event_id": "e12",
+      "date_or_hospital_day": "2026-03-04 (Hospital Day 3)",
+      "category": "test_result_documented",
+      "statement": "White blood cell count was 9.4 x10^9/L and C-reactive protein was 51 mg/L; blood cultures showed no growth to date and sputum culture showed normal respiratory flora.",
+      "evidence": [
+        {
+          "span_id": "note_04_p01_b05",
+          "quote": "White blood cell count 9.4 x10^9/L. C-reactive protein 51 mg/L.",
+          "start": null
+        },
+        {
+          "span_id": "note_04_p01_b06",
+          "quote": "Blood cultures no growth to date. Sputum culture: normal respiratory flora.",
+          "start": null
+        }
+      ],
+      "needs_review": false
+    },
+    {
+      "event_id": "e13",
+      "date_or_hospital_day": "2026-03-04 (Hospital Day 3)",
+      "category": "treatment_documented",
+      "statement": "The progress note documented switching intravenous Antibiotic B to oral Antibiotic B and discontinuing supplemental oxygen after hypoxemia was documented as resolved. The nursing note documented the first oral Antibiotic B dose.",
+      "evidence": [
+        {
+          "span_id": "note_04_p01_b09",
+          "quote": "Pneumonia: Switch intravenous Antibiotic B to oral Antibiotic B.",
+          "start": null
+        },
+        {
+          "span_id": "note_04_p01_b09",
+          "quote": "Hypoxemia: Resolved. Supplemental oxygen discontinued.",
+          "start": null
+        },
+        {
+          "span_id": "note_05_p01_b04",
+          "quote": "First dose of oral Antibiotic B given.",
+          "start": null
+        }
+      ],
+      "needs_review": false
+    },
+    {
+      "event_id": "e14",
+      "date_or_hospital_day": "2026-03-04 (Hospital Day 3)",
+      "category": "status",
+      "statement": "The progress note documented room-air oxygen saturation of 96%; nursing documented ambulation of 50 meters without oxygen and saturation of 95% after walking.",
+      "evidence": [
+        {
+          "span_id": "note_04_p01_b03",
+          "quote": "Oxygen saturation 96% on room air.",
+          "start": null
+        },
+        {
+          "span_id": "note_05_p01_b02",
+          "quote": "Patient ambulated 50 meters in the hallway without oxygen; saturation 95% after walking.",
+          "start": null
+        }
+      ],
+      "needs_review": false
+    },
+    {
+      "event_id": "e15",
+      "date_or_hospital_day": "2026-03-04 (Hospital Day 3)",
+      "category": "other",
+      "statement": "Medication A dose was documented as 10 mg daily in the progress note, while the nursing note documented Medication A 5 mg given that shift; the same-day dose documentation is conflicting.",
+      "evidence": [
+        {
+          "span_id": "note_04_p01_b07",
+          "quote": "Medication A 10 mg daily.",
+          "start": null
+        },
+        {
+          "span_id": "note_05_p01_b04",
+          "quote": "Medication A 5 mg given this shift.",
+          "start": null
+        }
+      ],
+      "needs_review": true
+    },
+    {
+      "event_id": "e16",
+      "date_or_hospital_day": "2026-03-05 (Hospital Day 4)",
+      "category": "assessment_documented",
+      "statement": "Community-acquired pneumonia was documented as improved, and hypertension was documented.",
+      "evidence": [
+        {
+          "span_id": "note_06_p01_b07",
+          "quote": "Community-acquired pneumonia, improved. Hypertension.",
+          "start": null
+        }
+      ],
+      "needs_review": false
+    },
+    {
+      "event_id": "e17",
+      "date_or_hospital_day": "2026-03-05 (Hospital Day 4)",
+      "category": "status",
+      "statement": "At discharge, the patient was documented as clinically stable and improved, with mild residual cough and no shortness of breath at rest.",
+      "evidence": [
+        {
+          "span_id": "note_06_p01_b02",
+          "quote": "Patient reports mild residual cough, no shortness of breath at rest.",
+          "start": null
+        },
+        {
+          "span_id": "note_06_p01_b08",
+          "quote": "Clinically stable, improved.",
+          "start": null
+        }
+      ],
+      "needs_review": false
+    },
+    {
+      "event_id": "e18",
+      "date_or_hospital_day": "2026-03-05 (Hospital Day 4)",
+      "category": "test_result_documented",
+      "statement": "Blood cultures had no growth to date with final results pending at discharge; sputum culture showed normal respiratory flora.",
+      "evidence": [
+        {
+          "span_id": "note_06_p01_b05",
+          "quote": "Blood cultures no growth to date; final results pending at discharge. Sputum culture: normal respiratory flora.",
+          "start": null
+        }
+      ],
+      "needs_review": false
+    },
+    {
+      "event_id": "e19",
+      "date_or_hospital_day": "2026-03-05 (Hospital Day 4)",
+      "category": "follow_up",
+      "statement": "Discharged home with a plan to complete oral Antibiotic B for a total of 7 days of antibiotic therapy; Medication A was continued.",
+      "evidence": [
+        {
+          "span_id": "note_06_p01_b09",
+          "quote": "Discharge home today.",
+          "start": null
+        },
+        {
+          "span_id": "note_06_p01_b09",
+          "quote": "Pneumonia: Complete oral Antibiotic B for a total of 7 days of antibiotic therapy.",
+          "start": null
+        },
+        {
+          "span_id": "note_06_p01_b09",
+          "quote": "Hypertension: Medication A continued.",
+          "start": null
+        }
+      ],
+      "needs_review": false
+    },
+    {
+      "event_id": "e20",
+      "date_or_hospital_day": "2026-03-05 (Hospital Day 4)",
+      "category": "follow_up",
+      "statement": "Primary care clinic follow-up in 1 week and repeat chest X-ray in 6 weeks were planned; the primary care clinic was to follow up final blood culture results.",
+      "evidence": [
+        {
+          "span_id": "note_06_p01_b09",
+          "quote": "Follow up with primary care clinic in 1 week.",
+          "start": null
+        },
+        {
+          "span_id": "note_06_p01_b09",
+          "quote": "Repeat chest X-ray in 6 weeks.",
+          "start": null
+        },
+        {
+          "span_id": "note_06_p01_b09",
+          "quote": "Final blood culture results pending at discharge; primary care clinic to follow up.",
+          "start": null
+        }
+      ],
+      "needs_review": false
+    }
+  ]
+}

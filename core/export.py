@@ -1,0 +1,47 @@
+"""Draft -> Markdown export with source appendix (spec §10 Export output)."""
+from datetime import datetime
+
+from core.models import ClinicianClarification, Document, Draft, SourceSpan
+
+SECTIONS = {"reason_for_admission": "Reason for admission", "hospital_course": "Hospital course",
+            "key_events": "Key tests, interventions and documented changes",
+            "condition_at_discharge": "Condition at discharge", "follow_up": "Follow-up",
+            "pending_items": "Pending items"}
+NOT_DOCUMENTED = "Not documented in the supplied notes."
+
+
+def marker(span: SourceSpan) -> str:
+    return f"[N{span.document_id[-2:]}:B{span.order:02d}]"
+
+
+def to_markdown(draft: Draft, spans: dict[str, SourceSpan], documents: list[Document], case_id: str = "case_001",
+                clarifications: list[ClinicianClarification] = ()) -> str:
+    status = (f"APPROVED by {draft.reviewer} at {draft.approved_at:%Y-%m-%d %H:%M}" if draft.status == "approved"
+              else "DRAFT — NOT APPROVED")
+    out = ["# Discharge summary", "", "**SYNTHETIC DEMONSTRATION — NOT FOR CLINICAL USE**", "",
+           f"- Case: {case_id} (fictional)", f"- Status: {status}", f"- Generated: {datetime.now():%Y-%m-%d %H:%M}", ""]
+    for key, title in SECTIONS.items():
+        out += [f"## {title}", ""]
+        claims = [c for c in draft.claims if c.section == key]
+        for c in claims:
+            flag = " **(needs review)**" if c.support_status == "needs_review" else ""
+            clar = " *(clinician-provided)*" if c.clinician_clarification_ids else ""
+            out.append(f"- {c.text}{flag}{clar} " + " ".join(marker(spans[s]) for s in c.evidence_span_ids))
+        out += ([] if claims else [NOT_DOCUMENTED]) + [""]
+    out += ["## Unresolved discrepancies", ""]
+    for d in draft.discrepancies:
+        out.append(f"- {d.discrepancy_id} ({d.status}): {d.description} "
+                   + " ".join(marker(spans[s]) for s in d.source_span_ids))
+    out += ([] if draft.discrepancies else ["None flagged."]) + ["", "## Clinician-provided clarifications", ""]
+    accepted = [k for k in clarifications if k.status == "accepted"]
+    out += [f"- {k.clarification_id} → {k.target_claim_id}: \"{k.statement}\" (clinician-provided, not document evidence)"
+            for k in accepted] or ["None."]
+    out += ["", "## Source appendix", ""]
+    files = {d.document_id: d for d in documents}
+    cited = {s for c in draft.claims for s in c.evidence_span_ids} | {s for d in draft.discrepancies for s in d.source_span_ids}
+    for sid in sorted(cited):
+        sp = spans[sid]
+        doc = files.get(sp.document_id)
+        when = f", {doc.date} (Hospital Day {doc.hospital_day})" if doc else ""
+        out += [f"**{marker(sp)}** {sp.filename}, page {sp.page}{when}", "", "> " + sp.text.replace("\n", "\n> "), ""]
+    return "\n".join(out)

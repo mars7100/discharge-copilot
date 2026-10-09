@@ -1,0 +1,222 @@
+{
+  "claims": [
+    {
+      "claim_id": "C01",
+      "section": "reason_for_admission",
+      "text": "The patient presented with three days of productive cough with yellow sputum, subjective fevers, and increasing shortness of breath on exertion, and denied chest pain.",
+      "evidence_span_ids": [
+        "note_01_p01_b03"
+      ],
+      "clinician_clarification_ids": [],
+      "support_status": "unverified"
+    },
+    {
+      "claim_id": "C02",
+      "section": "reason_for_admission",
+      "text": "Community-acquired pneumonia of the right lower lobe and hypertension were documented.",
+      "evidence_span_ids": [
+        "note_01_p01_b10"
+      ],
+      "clinician_clarification_ids": [],
+      "support_status": "unverified"
+    },
+    {
+      "claim_id": "C03",
+      "section": "key_events",
+      "text": "The chest X-ray showed right lower lobe consolidation and no pleural effusion.",
+      "evidence_span_ids": [
+        "note_01_p01_b09"
+      ],
+      "clinician_clarification_ids": [],
+      "support_status": "unverified"
+    },
+    {
+      "claim_id": "C04",
+      "section": "key_events",
+      "text": "Initial white blood cell count was 15.2 x10^9/L, C-reactive protein was 142 mg/L, and creatinine was 0.9 mg/dL.",
+      "evidence_span_ids": [
+        "note_01_p01_b08"
+      ],
+      "clinician_clarification_ids": [],
+      "support_status": "unverified"
+    },
+    {
+      "claim_id": "C05",
+      "section": "hospital_course",
+      "text": "On hospital day 1, the patient was admitted to the medical ward and started intravenous Antibiotic B; blood cultures were drawn before the first dose, and sputum culture was requested.",
+      "evidence_span_ids": [
+        "note_01_p01_b11"
+      ],
+      "clinician_clarification_ids": [],
+      "support_status": "unverified"
+    },
+    {
+      "claim_id": "C06",
+      "section": "hospital_course",
+      "text": "Supplemental oxygen by nasal cannula was planned to keep saturation above 92%; the night nursing note documented oxygen at 2 L/min with saturation 94%.",
+      "evidence_span_ids": [
+        "note_01_p01_b11",
+        "note_02_p01_b03"
+      ],
+      "clinician_clarification_ids": [],
+      "support_status": "unverified"
+    },
+    {
+      "claim_id": "C07",
+      "section": "hospital_course",
+      "text": "Medication A 5 mg daily was ordered for hypertension. The night nursing note documented the first intravenous Antibiotic B dose at 22:15, with no reaction observed.",
+      "evidence_span_ids": [
+        "note_01_p01_b11",
+        "note_02_p01_b04"
+      ],
+      "clinician_clarification_ids": [],
+      "support_status": "unverified"
+    },
+    {
+      "claim_id": "C08",
+      "section": "hospital_course",
+      "text": "On hospital day 2, the patient reported less shortness of breath than on admission, with persistent cough and yellow sputum.",
+      "evidence_span_ids": [
+        "note_03_p01_b02"
+      ],
+      "clinician_clarification_ids": [],
+      "support_status": "unverified"
+    },
+    {
+      "claim_id": "C09",
+      "section": "key_events",
+      "text": "On hospital day 2, white blood cell count was 12.1 x10^9/L and C-reactive protein was 96 mg/L; blood cultures showed no growth to date, and sputum culture was pending.",
+      "evidence_span_ids": [
+        "note_03_p01_b05",
+        "note_03_p01_b06"
+      ],
+      "clinician_clarification_ids": [],
+      "support_status": "unverified"
+    },
+    {
+      "claim_id": "C10",
+      "section": "hospital_course",
+      "text": "Community-acquired pneumonia was documented as improving on hospital day 2; hypertension was also documented.",
+      "evidence_span_ids": [
+        "note_03_p01_b08"
+      ],
+      "clinician_clarification_ids": [],
+      "support_status": "unverified"
+    },
+    {
+      "claim_id": "C11",
+      "section": "hospital_course",
+      "text": "Intravenous Antibiotic B was continued, and oxygen was weaned to 1 L/min with further weaning as tolerated planned.",
+      "evidence_span_ids": [
+        "note_03_p01_b09"
+      ],
+      "clinician_clarification_ids": [],
+      "support_status": "unverified"
+    },
+    {
+      "claim_id": "C12",
+      "section": "key_events",
+      "text": "On hospital day 3, white blood cell count was 9.4 x10^9/L and C-reactive protein was 51 mg/L; blood cultures showed no growth to date, and sputum culture showed normal respiratory flora.",
+      "evidence_span_ids": [
+        "note_04_p01_b05",
+        "note_04_p01_b06"
+      ],
+      "clinician_clarification_ids": [],
+      "support_status": "unverified"
+    },
+    {
+      "claim_id": "C13",
+      "section": "hospital_course",
+      "text": "On hospital day 3, intravenous Antibiotic B was switched to oral Antibiotic B, and supplemental oxygen was discontinued after hypoxemia was documented as resolved; nursing documented the first oral dose.",
+      "evidence_span_ids": [
+        "note_04_p01_b09",
+        "note_05_p01_b04"
+      ],
+      "clinician_clarification_ids": [],
+      "support_status": "unverified"
+    },
+    {
+      "claim_id": "C14",
+      "section": "key_events",
+      "text": "The progress note documented room-air oxygen saturation of 96%; nursing documented ambulation of 50 meters without oxygen and saturation of 95% after walking.",
+      "evidence_span_ids": [
+        "note_04_p01_b03",
+        "note_05_p01_b02"
+      ],
+      "clinician_clarification_ids": [],
+      "support_status": "unverified"
+    },
+    {
+      "claim_id": "C15",
+      "section": "hospital_course",
+      "text": "Medication A dose documentation on hospital day 3 was conflicting: the progress note documented 10 mg daily, while the nursing note documented Medication A 5 mg given that shift.",
+      "evidence_span_ids": [
+        "note_04_p01_b07",
+        "note_05_p01_b04"
+      ],
+      "clinician_clarification_ids": [],
+      "support_status": "unverified"
+    },
+    {
+      "claim_id": "C16",
+      "section": "hospital_course",
+      "text": "On hospital day 4, community-acquired pneumonia was documented as improved, and hypertension was documented.",
+      "evidence_span_ids": [
+        "note_06_p01_b07"
+      ],
+      "clinician_clarification_ids": [],
+      "support_status": "unverified"
+    },
+    {
+      "claim_id": "C17",
+      "section": "condition_at_discharge",
+      "text": "At discharge, the patient was documented as clinically stable and improved, with mild residual cough and no shortness of breath at rest.",
+      "evidence_span_ids": [
+        "note_06_p01_b02",
+        "note_06_p01_b08"
+      ],
+      "clinician_clarification_ids": [],
+      "support_status": "unverified"
+    },
+    {
+      "claim_id": "C18",
+      "section": "key_events",
+      "text": "At discharge, blood cultures showed no growth to date with final results pending, and sputum culture showed normal respiratory flora.",
+      "evidence_span_ids": [
+        "note_06_p01_b05"
+      ],
+      "clinician_clarification_ids": [],
+      "support_status": "unverified"
+    },
+    {
+      "claim_id": "C19",
+      "section": "follow_up",
+      "text": "The patient was discharged home with a plan to complete oral Antibiotic B for a total of 7 days of antibiotic therapy, and Medication A was continued.",
+      "evidence_span_ids": [
+        "note_06_p01_b09"
+      ],
+      "clinician_clarification_ids": [],
+      "support_status": "unverified"
+    },
+    {
+      "claim_id": "C20",
+      "section": "follow_up",
+      "text": "Primary care clinic follow-up in 1 week and repeat chest X-ray in 6 weeks were planned; the primary care clinic was to follow up final blood culture results.",
+      "evidence_span_ids": [
+        "note_06_p01_b09"
+      ],
+      "clinician_clarification_ids": [],
+      "support_status": "unverified"
+    },
+    {
+      "claim_id": "C21",
+      "section": "pending_items",
+      "text": "Final blood culture results were pending at discharge.",
+      "evidence_span_ids": [
+        "note_06_p01_b05"
+      ],
+      "clinician_clarification_ids": [],
+      "support_status": "unverified"
+    }
+  ]
+}

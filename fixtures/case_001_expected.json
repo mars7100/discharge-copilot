@@ -1,0 +1,121 @@
+{
+  "case_id": "case_001",
+  "synthetic": true,
+  "authored": "Manually written from the fixture notes before any app output existed. Evidence is document_id + exact quote; span IDs are resolved at test time.",
+  "documents": [
+    {"document_id": "note_01", "date": "2026-03-02", "hospital_day": 1, "type": "Admission note"},
+    {"document_id": "note_02", "date": "2026-03-02", "hospital_day": 1, "type": "Night shift nursing note"},
+    {"document_id": "note_03", "date": "2026-03-03", "hospital_day": 2, "type": "Daily progress note"},
+    {"document_id": "note_04", "date": "2026-03-04", "hospital_day": 3, "type": "Daily progress note"},
+    {"document_id": "note_05", "date": "2026-03-04", "hospital_day": 3, "type": "Day shift nursing note"},
+    {"document_id": "note_06", "date": "2026-03-05", "hospital_day": 4, "type": "Discharge day progress note"}
+  ],
+  "expected_facts": [
+    {"fact_id": "F01", "section": "reason_for_admission", "hospital_day": 1,
+     "statement": "Admitted with community-acquired pneumonia of the right lower lobe.",
+     "evidence": [
+       {"document_id": "note_01", "quote": "Community-acquired pneumonia, right lower lobe."},
+       {"document_id": "note_01", "quote": "Chest X-ray shows right lower lobe consolidation."}]},
+    {"fact_id": "F02", "section": "reason_for_admission", "hospital_day": 1,
+     "statement": "Presented with three days of cough, fever and shortness of breath.",
+     "evidence": [{"document_id": "note_01", "quote": "Cough, fever and shortness of breath for three days."}]},
+    {"fact_id": "F03", "section": "hospital_course", "hospital_day": 1,
+     "statement": "Oxygen saturation 90% on room air at presentation; supplemental oxygen started.",
+     "evidence": [
+       {"document_id": "note_01", "quote": "Oxygen saturation 90% on room air."},
+       {"document_id": "note_01", "quote": "Supplemental oxygen by nasal cannula to keep saturation above 92%."}]},
+    {"fact_id": "F04", "section": "hospital_course", "hospital_day": 1,
+     "statement": "Intravenous Antibiotic B started; first dose given at 22:15.",
+     "evidence": [
+       {"document_id": "note_01", "quote": "Start intravenous Antibiotic B."},
+       {"document_id": "note_02", "quote": "First dose of intravenous Antibiotic B given at 22:15."}]},
+    {"fact_id": "F05", "section": "key_events", "hospital_day": 1,
+     "statement": "Blood cultures drawn before the first antibiotic dose.",
+     "evidence": [{"document_id": "note_01", "quote": "Blood cultures drawn before first antibiotic dose."}]},
+    {"fact_id": "F06", "section": "hospital_course", "hospital_day": 2,
+     "statement": "Afebrile since 06:00 on Day 2; oxygen weaned to 1 L/min.",
+     "evidence": [
+       {"document_id": "note_03", "quote": "afebrile since 06:00"},
+       {"document_id": "note_03", "quote": "Oxygen weaned to 1 L/min"}]},
+    {"fact_id": "F07", "section": "hospital_course", "hospital_day": 3,
+     "statement": "Supplemental oxygen discontinued on Day 3.",
+     "evidence": [{"document_id": "note_04", "quote": "Supplemental oxygen discontinued."}]},
+    {"fact_id": "F08", "section": "hospital_course", "hospital_day": 3,
+     "statement": "Intravenous Antibiotic B switched to oral Antibiotic B on Day 3.",
+     "evidence": [
+       {"document_id": "note_04", "quote": "Switch intravenous Antibiotic B to oral Antibiotic B."},
+       {"document_id": "note_05", "quote": "First dose of oral Antibiotic B given."}]},
+    {"fact_id": "F09", "section": "key_events", "hospital_day": null,
+     "statement": "White blood cell count 15.2, 12.1, then 9.4 x10^9/L; C-reactive protein 142, 96, then 51 mg/L (Days 1-3).",
+     "evidence": [
+       {"document_id": "note_01", "quote": "White blood cell count 15.2 x10^9/L. C-reactive protein 142 mg/L."},
+       {"document_id": "note_03", "quote": "White blood cell count 12.1 x10^9/L. C-reactive protein 96 mg/L."},
+       {"document_id": "note_04", "quote": "White blood cell count 9.4 x10^9/L. C-reactive protein 51 mg/L."}]},
+    {"fact_id": "F10", "section": "key_events", "hospital_day": 3,
+     "statement": "Sputum culture grew normal respiratory flora.",
+     "evidence": [{"document_id": "note_04", "quote": "Sputum culture: normal respiratory flora."}]},
+    {"fact_id": "F11", "section": "condition_at_discharge", "hospital_day": 4,
+     "statement": "Clinically stable and improved at discharge.",
+     "evidence": [{"document_id": "note_06", "quote": "Clinically stable, improved."}]},
+    {"fact_id": "F12", "section": "follow_up", "hospital_day": 4,
+     "statement": "Complete oral Antibiotic B for a total of 7 days of antibiotic therapy.",
+     "evidence": [{"document_id": "note_06", "quote": "Complete oral Antibiotic B for a total of 7 days of antibiotic therapy."}]},
+    {"fact_id": "F13", "section": "follow_up", "hospital_day": 4,
+     "statement": "Follow up with primary care clinic in 1 week.",
+     "evidence": [{"document_id": "note_06", "quote": "Follow up with primary care clinic in 1 week."}]},
+    {"fact_id": "F14", "section": "follow_up", "hospital_day": 4,
+     "statement": "Repeat chest X-ray in 6 weeks.",
+     "evidence": [{"document_id": "note_06", "quote": "Repeat chest X-ray in 6 weeks."}]},
+    {"fact_id": "F15", "section": "pending_items", "hospital_day": 4,
+     "statement": "Final blood culture results pending at discharge; primary care clinic to follow up.",
+     "evidence": [{"document_id": "note_06", "quote": "Final blood culture results pending at discharge; primary care clinic to follow up."}]},
+    {"fact_id": "F16", "section": "key_events", "hospital_day": 1,
+     "statement": "Medication A 5 mg daily ordered on Day 1 and continued on Day 2.",
+     "evidence": [
+       {"document_id": "note_01", "quote": "Medication A 5 mg daily ordered."},
+       {"document_id": "note_03", "quote": "Medication A 5 mg daily continued."}]}
+  ],
+  "expected_chronology": ["F02", "F04", "F06", "F07", "F08", "F11"],
+  "discrepancies": [
+    {"discrepancy_id": "D01",
+     "description": "Medication A dose on Hospital Day 3 is documented as 10 mg daily in the resident note and as 5 mg given in the nursing note; neither establishes a change or its timing.",
+     "status": "open",
+     "evidence": [
+       {"document_id": "note_04", "quote": "Medication A 10 mg daily continued."},
+       {"document_id": "note_05", "quote": "Medication A 5 mg given this shift."}],
+     "context_evidence": [
+       {"document_id": "note_01", "quote": "Medication A 5 mg daily ordered."},
+       {"document_id": "note_03", "quote": "Medication A 5 mg daily continued."},
+       {"document_id": "note_04", "quote": "Current medications: Intravenous Antibiotic B. Medication A 10 mg daily."}]}
+  ],
+  "information_gaps": [
+    {"gap_id": "G01", "description": "Reason for any Medication A dose difference is not documented."},
+    {"gap_id": "G02", "description": "Medication A dose at discharge is not documented.",
+     "evidence": [{"document_id": "note_06", "quote": "Medication A continued."}]}
+  ],
+  "expected_answers": [
+    {"question": "Why do the notes mention different doses?",
+     "must_cite": ["note_04", "note_05"],
+     "must_state": "The available notes do not establish that.",
+     "must_not": "Any rationale for the dose difference (e.g. blood pressure control, titration, error)."},
+    {"question": "What was the reason for the Medication A dose change?",
+     "must_cite": [],
+     "must_state": "The available notes do not establish that.",
+     "must_not": "Any rationale for the dose difference."}
+  ],
+  "scripted_clarification": {
+    "clinician_statement": "It was 5 mg initially and changed to 10 mg on day three.",
+    "target": "Claim describing Medication A dosing",
+    "expected_proposed_status": "pending",
+    "expected_label": "clinician-provided, pending approval",
+    "expected_discrepancy_status_after_accept": "clarified_pending_approval",
+    "must_retain_evidence": ["note_04", "note_05"]
+  },
+  "forbidden_claims": [
+    "Any reason for the Medication A dose difference",
+    "A specific Medication A dose at discharge",
+    "Any real drug name for Antibiotic B or Medication A",
+    "ICU admission, intubation, or complications not in the notes",
+    "Positive blood culture result"
+  ]
+}

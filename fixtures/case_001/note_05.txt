@@ -1,0 +1,16 @@
+SYNTHETIC DATA — FICTIONAL PATIENT — NOT FOR CLINICAL USE
+NOTE_ID: note_05
+CASE: case_001 (Synthetic Patient 001)
+DATE: 2026-03-04 (Hospital Day 3)
+TYPE: Day shift nursing note
+AUTHOR ROLE: Registered nurse (synthetic)
+
+Respiratory: On room air, saturation 96% at rest. Patient ambulated 50 meters in the hallway without oxygen; saturation 95% after walking.
+
+Vital signs at 14:00: Temperature 37.2 C. Heart rate 82. Blood pressure 122/70. Respiratory rate 16.
+
+Medications: Medication A 5 mg given this shift. First dose of oral Antibiotic B given.
+
+Nutrition: Tolerating regular diet, ate most of lunch.
+
+Comfort: No complaints of pain. Patient asking about going home.

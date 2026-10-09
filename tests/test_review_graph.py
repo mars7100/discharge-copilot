@@ -235,3 +235,19 @@ def test_rationale_replay_cites_conflict(case, monkeypatch):  # RED until re-rec
     monkeypatch.setattr(llm, "_call", lambda *a, **k: pytest.fail("no replay recording for the rationale question"))
     out = rg.ask(RATIONALE_Q, draft, spans, events)
     assert set(CONFLICT) <= set(out["cited"])
+
+
+@pytest.mark.parametrize("question", ["Why do the notes mention different doses?", RATIONALE_Q])
+def test_conflict_answers_attribute_flag_to_app_and_hide_ids(case, monkeypatch, question):  # review M1 + opt 1
+    draft, spans, events = case
+    monkeypatch.setattr(llm, "_call", lambda *a, **k: pytest.fail("no replay recording"))
+    out = rg.ask(question, draft, spans, events)
+    assert set(CONFLICT) <= set(out["cited"])
+    assert "notes flag" not in out["answer"].lower()
+    assert "note_0" not in out["answer"]
+
+
+def test_passages_carry_note_dates(case, stub):  # review opt 2
+    draft, spans, events = case
+    rg.ask(RATIONALE_Q, draft, spans, events)
+    assert "(note dated 2026-03-04 (Hospital Day 3))" in user_msg(stub[0])

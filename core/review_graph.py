@@ -14,7 +14,8 @@ SYSTEM = f"""You answer a clinician's question about a synthetic hospitalization
 - Distinguish what the notes state; never add rationale, explanation or medical knowledge the passages do not state.
 - If the passages do not answer the question, the answer must include exactly: "{NOT_ESTABLISHED}"
 - If passages give different values for the same item, state each value with its note date and cite every such passage; do not describe a change, order or resolution the passages do not state.
-- span_ids: the IDs of the passages your answer relies on, copied exactly. Two to four sentences."""
+- "Flagged for review" lines come from this review tool, not from the notes: attribute any flagged conflict to the review tool, never say the notes flag it.
+- span_ids: the IDs of the passages your answer relies on, copied exactly. Do not write span IDs in the answer text. Two to four sentences."""
 STOP = set("the a an of to in on was were is are do does did why what when how which and or for with notes note mention".split())
 
 
@@ -59,11 +60,20 @@ def retrieve(s: State) -> State:
     return {"retrieved": list(dict.fromkeys(out))[:8]}
 
 
+def note_date(spans: dict[str, SourceSpan], doc_id: str) -> str:
+    """DATE line from the note's header span, e.g. '2026-03-04 (Hospital Day 3)'."""
+    header = next((sp.text for sp in spans.values() if sp.document_id == doc_id and sp.order == 1), "")
+    m = re.search(r"^DATE:[ \t]*(.+)$", header, re.M)
+    return m.group(1) if m else "unknown"
+
+
 def answer(s: State) -> State:
     if not s["retrieved"]:
         return {"answer": NOT_ESTABLISHED, "cited": []}
-    passages = "\n".join(f"[{sid}] {s['spans'][sid].text}" for sid in s["retrieved"])
-    flags = "".join(f"\nFlagged for review: {d.description}" for d in s["draft"].discrepancies
+    passages = "\n".join(f"[{sid}] (note dated {note_date(s['spans'], s['spans'][sid].document_id)}) {s['spans'][sid].text}"
+                         for sid in s["retrieved"])
+    flags = "".join(f"\nFlagged for review by this app (not stated in the notes): {d.description}"
+                    for d in s["draft"].discrepancies
                     if set(d.source_span_ids) & set(s["retrieved"]))
     messages = [{"role": "system", "content": SYSTEM},
                 {"role": "user", "content": f"Passages:\n{passages}{flags}\n\nQuestion: {s['question']}"}]

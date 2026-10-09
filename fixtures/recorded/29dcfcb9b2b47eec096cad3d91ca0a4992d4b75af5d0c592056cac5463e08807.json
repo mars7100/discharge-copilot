@@ -1,8 +1,0 @@
-{
-  "answer": "The available notes do not establish that. They document Medication A 5 mg daily ordered on 2026-03-02 and, on 2026-03-04, Medication A 10 mg daily in one note and 5 mg given that shift in another, without stating a reason for a dose change.",
-  "span_ids": [
-    "note_01_p01_b11",
-    "note_04_p01_b07",
-    "note_05_p01_b04"
-  ]
-}

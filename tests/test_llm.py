@@ -114,5 +114,5 @@ def test_call_sets_client_timeout(monkeypatch):
 
     monkeypatch.setattr(llm, "OpenAI", Recording)
     REAL_CALL(Out, MSGS)
-    assert init.get("timeout") == 30
+    assert init.get("timeout") == 120
     assert seen == {"model": "test-model", "input": MSGS, "text_format": Out, "store": False}

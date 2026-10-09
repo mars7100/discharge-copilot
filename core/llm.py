@@ -21,7 +21,7 @@ def request_key(schema: type[BaseModel], messages: list[dict]) -> str:
 
 
 def _call(schema: type[BaseModel], messages: list[dict]) -> BaseModel:
-    parsed = OpenAI(timeout=30).responses.parse(model=_model(), input=messages, text_format=schema, store=False).output_parsed
+    parsed = OpenAI(timeout=120).responses.parse(model=_model(), input=messages, text_format=schema, store=False).output_parsed
     if parsed is None:
         raise RuntimeError("model returned no parsed output")
     return parsed

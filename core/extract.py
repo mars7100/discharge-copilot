@@ -10,7 +10,10 @@ SYSTEM = """You extract clinical events from synthetic hospital notes.
 - Each evidence item cites one span: span_id exactly as given, and quote copied verbatim from that span (a sentence or clause, not the whole span). Set start to null.
 - event_id may be any placeholder; it is renumbered afterwards.
 - date_or_hospital_day: use the note's documented date/hospital day, e.g. "2026-03-04 (Hospital Day 3)".
-- Set needs_review to true when the notes document conflicting values for the same fact in an overlapping or unclear time period."""
+- One documented fact per event; never combine unrelated facts in one event.
+- For each hospital day, include vital-sign status and medication status when documented.
+- Set needs_review to true when the notes document conflicting values for the same fact in an overlapping or unclear time period.
+- Report each conflict as exactly one needs_review event citing one passage from each conflicting note; do not set needs_review on any other event."""
 
 
 class ExtractionResult(BaseModel):

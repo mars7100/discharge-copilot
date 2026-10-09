@@ -75,9 +75,9 @@ def test_cited_ids_not_retrieved_are_dropped(case, stub):  # T12
 def test_read_section_uses_draft_without_llm(case, stub):
     draft, spans, events = case
     out = rg.ask("Read the condition at discharge", draft, spans, events)
-    claim = next(c for c in draft.claims if c.section == "condition_at_discharge")
-    assert out["intent"] == "read_section" and claim.text in out["answer"]
-    assert out["cited"] == claim.evidence_span_ids and stub == []
+    claims = [c for c in draft.claims if c.section == "condition_at_discharge"]
+    assert out["intent"] == "read_section" and claims and all(c.text in out["answer"] for c in claims)
+    assert out["cited"] == [s for c in claims for s in c.evidence_span_ids] and stub == []
 
 
 def test_one_word_is_unknown_without_llm(case, stub):

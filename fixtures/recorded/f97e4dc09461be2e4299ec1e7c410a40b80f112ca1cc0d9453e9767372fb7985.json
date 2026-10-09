@@ -1,0 +1,975 @@
+{
+  "events": [
+    {
+      "event_id": "e1",
+      "date_or_hospital_day": "2026-03-02 (Hospital Day 1)",
+      "category": "presentation",
+      "statement": "Presented with three days of productive cough with yellow sputum, subjective fevers, and increasing shortness of breath on exertion.",
+      "evidence": [
+        {
+          "span_id": "note_01_p01_b03",
+          "quote": "presented to the emergency department with three days of productive cough with yellow sputum, subjective fevers and increasing shortness of breath on exertion.",
+          "start": null
+        }
+      ],
+      "needs_review": false
+    },
+    {
+      "event_id": "e2",
+      "date_or_hospital_day": "2026-03-02 (Hospital Day 1)",
+      "category": "presentation",
+      "statement": "Denied chest pain.",
+      "evidence": [
+        {
+          "span_id": "note_01_p01_b03",
+          "quote": "Denies chest pain.",
+          "start": null
+        }
+      ],
+      "needs_review": false
+    },
+    {
+      "event_id": "e3",
+      "date_or_hospital_day": "2026-03-02 (Hospital Day 1)",
+      "category": "assessment_documented",
+      "statement": "History of hypertension was documented.",
+      "evidence": [
+        {
+          "span_id": "note_01_p01_b04",
+          "quote": "Past history documented: Hypertension.",
+          "start": null
+        }
+      ],
+      "needs_review": false
+    },
+    {
+      "event_id": "e4",
+      "date_or_hospital_day": "2026-03-02 (Hospital Day 1)",
+      "category": "status",
+      "statement": "Initial vital signs were temperature 38.9 C, heart rate 104, blood pressure 132/78, respiratory rate 24, and oxygen saturation 90% on room air.",
+      "evidence": [
+        {
+          "span_id": "note_01_p01_b06",
+          "quote": "Vital signs: Temperature 38.9 C. Heart rate 104. Blood pressure 132/78. Respiratory rate 24. Oxygen saturation 90% on room air.",
+          "start": null
+        }
+      ],
+      "needs_review": false
+    },
+    {
+      "event_id": "e5",
+      "date_or_hospital_day": "2026-03-02 (Hospital Day 1)",
+      "category": "test_result_documented",
+      "statement": "Examination documented crackles over the right lower chest.",
+      "evidence": [
+        {
+          "span_id": "note_01_p01_b07",
+          "quote": "Crackles over the right lower chest.",
+          "start": null
+        }
+      ],
+      "needs_review": false
+    },
+    {
+      "event_id": "e6",
+      "date_or_hospital_day": "2026-03-02 (Hospital Day 1)",
+      "category": "test_result_documented",
+      "statement": "White blood cell count was 15.2 x10^9/L.",
+      "evidence": [
+        {
+          "span_id": "note_01_p01_b08",
+          "quote": "White blood cell count 15.2 x10^9/L.",
+          "start": null
+        }
+      ],
+      "needs_review": false
+    },
+    {
+      "event_id": "e7",
+      "date_or_hospital_day": "2026-03-02 (Hospital Day 1)",
+      "category": "test_result_documented",
+      "statement": "C-reactive protein was 142 mg/L.",
+      "evidence": [
+        {
+          "span_id": "note_01_p01_b08",
+          "quote": "C-reactive protein 142 mg/L.",
+          "start": null
+        }
+      ],
+      "needs_review": false
+    },
+    {
+      "event_id": "e8",
+      "date_or_hospital_day": "2026-03-02 (Hospital Day 1)",
+      "category": "test_result_documented",
+      "statement": "Creatinine was 0.9 mg/dL.",
+      "evidence": [
+        {
+          "span_id": "note_01_p01_b08",
+          "quote": "Creatinine 0.9 mg/dL.",
+          "start": null
+        }
+      ],
+      "needs_review": false
+    },
+    {
+      "event_id": "e9",
+      "date_or_hospital_day": "2026-03-02 (Hospital Day 1)",
+      "category": "test_result_documented",
+      "statement": "Chest X-ray showed right lower lobe consolidation.",
+      "evidence": [
+        {
+          "span_id": "note_01_p01_b09",
+          "quote": "Chest X-ray shows right lower lobe consolidation.",
+          "start": null
+        }
+      ],
+      "needs_review": false
+    },
+    {
+      "event_id": "e10",
+      "date_or_hospital_day": "2026-03-02 (Hospital Day 1)",
+      "category": "test_result_documented",
+      "statement": "Chest X-ray showed no pleural effusion.",
+      "evidence": [
+        {
+          "span_id": "note_01_p01_b09",
+          "quote": "No pleural effusion.",
+          "start": null
+        }
+      ],
+      "needs_review": false
+    },
+    {
+      "event_id": "e11",
+      "date_or_hospital_day": "2026-03-02 (Hospital Day 1)",
+      "category": "assessment_documented",
+      "statement": "Community-acquired pneumonia, right lower lobe, was documented.",
+      "evidence": [
+        {
+          "span_id": "note_01_p01_b10",
+          "quote": "Community-acquired pneumonia, right lower lobe.",
+          "start": null
+        }
+      ],
+      "needs_review": false
+    },
+    {
+      "event_id": "e12",
+      "date_or_hospital_day": "2026-03-02 (Hospital Day 1)",
+      "category": "assessment_documented",
+      "statement": "Hypertension was documented in the assessment.",
+      "evidence": [
+        {
+          "span_id": "note_01_p01_b10",
+          "quote": "Hypertension.",
+          "start": null
+        }
+      ],
+      "needs_review": false
+    },
+    {
+      "event_id": "e13",
+      "date_or_hospital_day": "2026-03-02 (Hospital Day 1)",
+      "category": "treatment_documented",
+      "statement": "Admission to the medical ward and initiation of intravenous Antibiotic B were planned.",
+      "evidence": [
+        {
+          "span_id": "note_01_p01_b11",
+          "quote": "Admit to medical ward. Start intravenous Antibiotic B.",
+          "start": null
+        }
+      ],
+      "needs_review": false
+    },
+    {
+      "event_id": "e14",
+      "date_or_hospital_day": "2026-03-02 (Hospital Day 1)",
+      "category": "test_result_documented",
+      "statement": "Blood cultures were drawn before the first antibiotic dose.",
+      "evidence": [
+        {
+          "span_id": "note_01_p01_b11",
+          "quote": "Blood cultures drawn before first antibiotic dose.",
+          "start": null
+        }
+      ],
+      "needs_review": false
+    },
+    {
+      "event_id": "e15",
+      "date_or_hospital_day": "2026-03-02 (Hospital Day 1)",
+      "category": "treatment_documented",
+      "statement": "A sputum culture was requested.",
+      "evidence": [
+        {
+          "span_id": "note_01_p01_b11",
+          "quote": "Sputum culture requested.",
+          "start": null
+        }
+      ],
+      "needs_review": false
+    },
+    {
+      "event_id": "e16",
+      "date_or_hospital_day": "2026-03-02 (Hospital Day 1)",
+      "category": "treatment_documented",
+      "statement": "Supplemental oxygen by nasal cannula was planned to keep saturation above 92%.",
+      "evidence": [
+        {
+          "span_id": "note_01_p01_b11",
+          "quote": "Supplemental oxygen by nasal cannula to keep saturation above 92%.",
+          "start": null
+        }
+      ],
+      "needs_review": false
+    },
+    {
+      "event_id": "e17",
+      "date_or_hospital_day": "2026-03-02 (Hospital Day 1)",
+      "category": "treatment_documented",
+      "statement": "Medication A 5 mg daily was ordered for hypertension.",
+      "evidence": [
+        {
+          "span_id": "note_01_p01_b11",
+          "quote": "Medication A 5 mg daily ordered.",
+          "start": null
+        }
+      ],
+      "needs_review": false
+    },
+    {
+      "event_id": "e18",
+      "date_or_hospital_day": "2026-03-02 (Hospital Day 1)",
+      "category": "status",
+      "statement": "The patient arrived on the ward from the emergency department at 21:30.",
+      "evidence": [
+        {
+          "span_id": "note_02_p01_b02",
+          "quote": "Patient arrived on the ward from the emergency department at 21:30.",
+          "start": null
+        }
+      ],
+      "needs_review": false
+    },
+    {
+      "event_id": "e19",
+      "date_or_hospital_day": "2026-03-02 (Hospital Day 1)",
+      "category": "status",
+      "statement": "The patient received oxygen at 2 L/min by nasal cannula with saturation 94%.",
+      "evidence": [
+        {
+          "span_id": "note_02_p01_b03",
+          "quote": "Oxygen 2 L/min by nasal cannula, saturation 94%.",
+          "start": null
+        }
+      ],
+      "needs_review": false
+    },
+    {
+      "event_id": "e20",
+      "date_or_hospital_day": "2026-03-02 (Hospital Day 1)",
+      "category": "test_result_documented",
+      "statement": "A sputum sample was collected and sent at 22:00.",
+      "evidence": [
+        {
+          "span_id": "note_02_p01_b03",
+          "quote": "sputum sample collected and sent at 22:00.",
+          "start": null
+        }
+      ],
+      "needs_review": false
+    },
+    {
+      "event_id": "e21",
+      "date_or_hospital_day": "2026-03-02 (Hospital Day 1)",
+      "category": "treatment_documented",
+      "statement": "The first dose of intravenous Antibiotic B was given at 22:15, with no reaction observed.",
+      "evidence": [
+        {
+          "span_id": "note_02_p01_b04",
+          "quote": "First dose of intravenous Antibiotic B given at 22:15. No reaction observed.",
+          "start": null
+        }
+      ],
+      "needs_review": false
+    },
+    {
+      "event_id": "e22",
+      "date_or_hospital_day": "2026-03-02 (Hospital Day 1)",
+      "category": "status",
+      "statement": "At 23:00, temperature was 38.4 C, heart rate 98, blood pressure 128/76, and respiratory rate 22.",
+      "evidence": [
+        {
+          "span_id": "note_02_p01_b05",
+          "quote": "Vital signs at 23:00: Temperature 38.4 C. Heart rate 98. Blood pressure 128/76. Respiratory rate 22.",
+          "start": null
+        }
+      ],
+      "needs_review": false
+    },
+    {
+      "event_id": "e23",
+      "date_or_hospital_day": "2026-03-03 (Hospital Day 2)",
+      "category": "status",
+      "statement": "The patient reported less shortness of breath than on admission.",
+      "evidence": [
+        {
+          "span_id": "note_03_p01_b02",
+          "quote": "Patient reports less shortness of breath than on admission.",
+          "start": null
+        }
+      ],
+      "needs_review": false
+    },
+    {
+      "event_id": "e24",
+      "date_or_hospital_day": "2026-03-03 (Hospital Day 2)",
+      "category": "status",
+      "statement": "The cough persisted with yellow sputum.",
+      "evidence": [
+        {
+          "span_id": "note_03_p01_b02",
+          "quote": "Cough persists with yellow sputum.",
+          "start": null
+        }
+      ],
+      "needs_review": false
+    },
+    {
+      "event_id": "e25",
+      "date_or_hospital_day": "2026-03-03 (Hospital Day 2)",
+      "category": "status",
+      "statement": "Vital signs included maximum temperature 37.9 C, afebrile since 06:00, heart rate 88, blood pressure 126/74, respiratory rate 18, and oxygen saturation 95% on 1 L/min nasal cannula.",
+      "evidence": [
+        {
+          "span_id": "note_03_p01_b03",
+          "quote": "Vital signs: Maximum temperature 37.9 C, afebrile since 06:00. Heart rate 88. Blood pressure 126/74. Respiratory rate 18. Oxygen saturation 95% on 1 L/min nasal cannula.",
+          "start": null
+        }
+      ],
+      "needs_review": false
+    },
+    {
+      "event_id": "e26",
+      "date_or_hospital_day": "2026-03-03 (Hospital Day 2)",
+      "category": "status",
+      "statement": "Right lower chest crackles were reduced compared with admission.",
+      "evidence": [
+        {
+          "span_id": "note_03_p01_b04",
+          "quote": "Crackles over the right lower chest, reduced compared with admission.",
+          "start": null
+        }
+      ],
+      "needs_review": false
+    },
+    {
+      "event_id": "e27",
+      "date_or_hospital_day": "2026-03-03 (Hospital Day 2)",
+      "category": "test_result_documented",
+      "statement": "White blood cell count was 12.1 x10^9/L.",
+      "evidence": [
+        {
+          "span_id": "note_03_p01_b05",
+          "quote": "White blood cell count 12.1 x10^9/L.",
+          "start": null
+        }
+      ],
+      "needs_review": false
+    },
+    {
+      "event_id": "e28",
+      "date_or_hospital_day": "2026-03-03 (Hospital Day 2)",
+      "category": "test_result_documented",
+      "statement": "C-reactive protein was 96 mg/L.",
+      "evidence": [
+        {
+          "span_id": "note_03_p01_b05",
+          "quote": "C-reactive protein 96 mg/L.",
+          "start": null
+        }
+      ],
+      "needs_review": false
+    },
+    {
+      "event_id": "e29",
+      "date_or_hospital_day": "2026-03-03 (Hospital Day 2)",
+      "category": "test_result_documented",
+      "statement": "Blood cultures showed no growth to date.",
+      "evidence": [
+        {
+          "span_id": "note_03_p01_b06",
+          "quote": "Blood cultures no growth to date.",
+          "start": null
+        }
+      ],
+      "needs_review": false
+    },
+    {
+      "event_id": "e30",
+      "date_or_hospital_day": "2026-03-03 (Hospital Day 2)",
+      "category": "test_result_documented",
+      "statement": "Sputum culture was pending.",
+      "evidence": [
+        {
+          "span_id": "note_03_p01_b06",
+          "quote": "Sputum culture pending.",
+          "start": null
+        }
+      ],
+      "needs_review": false
+    },
+    {
+      "event_id": "e31",
+      "date_or_hospital_day": "2026-03-03 (Hospital Day 2)",
+      "category": "treatment_documented",
+      "statement": "Current medications included intravenous Antibiotic B.",
+      "evidence": [
+        {
+          "span_id": "note_03_p01_b07",
+          "quote": "Intravenous Antibiotic B.",
+          "start": null
+        }
+      ],
+      "needs_review": false
+    },
+    {
+      "event_id": "e32",
+      "date_or_hospital_day": "2026-03-03 (Hospital Day 2)",
+      "category": "treatment_documented",
+      "statement": "Medication A 5 mg daily was listed among current medications.",
+      "evidence": [
+        {
+          "span_id": "note_03_p01_b07",
+          "quote": "Medication A 5 mg daily.",
+          "start": null
+        }
+      ],
+      "needs_review": false
+    },
+    {
+      "event_id": "e33",
+      "date_or_hospital_day": "2026-03-03 (Hospital Day 2)",
+      "category": "assessment_documented",
+      "statement": "Community-acquired pneumonia was documented as improving.",
+      "evidence": [
+        {
+          "span_id": "note_03_p01_b08",
+          "quote": "Community-acquired pneumonia, improving.",
+          "start": null
+        }
+      ],
+      "needs_review": false
+    },
+    {
+      "event_id": "e34",
+      "date_or_hospital_day": "2026-03-03 (Hospital Day 2)",
+      "category": "treatment_documented",
+      "statement": "Intravenous Antibiotic B was to be continued.",
+      "evidence": [
+        {
+          "span_id": "note_03_p01_b09",
+          "quote": "Continue intravenous Antibiotic B.",
+          "start": null
+        }
+      ],
+      "needs_review": false
+    },
+    {
+      "event_id": "e35",
+      "date_or_hospital_day": "2026-03-03 (Hospital Day 2)",
+      "category": "treatment_documented",
+      "statement": "Oxygen was weaned to 1 L/min, with further weaning as tolerated planned.",
+      "evidence": [
+        {
+          "span_id": "note_03_p01_b09",
+          "quote": "Oxygen weaned to 1 L/min; continue weaning as tolerated.",
+          "start": null
+        }
+      ],
+      "needs_review": false
+    },
+    {
+      "event_id": "e36",
+      "date_or_hospital_day": "2026-03-03 (Hospital Day 2)",
+      "category": "treatment_documented",
+      "statement": "Medication A 5 mg daily was continued.",
+      "evidence": [
+        {
+          "span_id": "note_03_p01_b09",
+          "quote": "Medication A 5 mg daily continued.",
+          "start": null
+        }
+      ],
+      "needs_review": false
+    },
+    {
+      "event_id": "e37",
+      "date_or_hospital_day": "2026-03-04 (Hospital Day 3)",
+      "category": "status",
+      "statement": "The patient felt better and was eating well.",
+      "evidence": [
+        {
+          "span_id": "note_04_p01_b02",
+          "quote": "Patient feels better and is eating well.",
+          "start": null
+        }
+      ],
+      "needs_review": false
+    },
+    {
+      "event_id": "e38",
+      "date_or_hospital_day": "2026-03-04 (Hospital Day 3)",
+      "category": "status",
+      "statement": "The cough persisted with yellow sputum.",
+      "evidence": [
+        {
+          "span_id": "note_04_p01_b02",
+          "quote": "Cough persists with yellow sputum.",
+          "start": null
+        }
+      ],
+      "needs_review": false
+    },
+    {
+      "event_id": "e39",
+      "date_or_hospital_day": "2026-03-04 (Hospital Day 3)",
+      "category": "status",
+      "statement": "Vital signs were afebrile for more than 24 hours with maximum temperature 37.4 C, heart rate 80, blood pressure 124/72, respiratory rate 16, and oxygen saturation 96% on room air.",
+      "evidence": [
+        {
+          "span_id": "note_04_p01_b03",
+          "quote": "Vital signs: Afebrile for more than 24 hours, maximum temperature 37.4 C. Heart rate 80. Blood pressure 124/72. Respiratory rate 16. Oxygen saturation 96% on room air.",
+          "start": null
+        }
+      ],
+      "needs_review": false
+    },
+    {
+      "event_id": "e40",
+      "date_or_hospital_day": "2026-03-04 (Hospital Day 3)",
+      "category": "status",
+      "statement": "Faint crackles were present over the right lower chest.",
+      "evidence": [
+        {
+          "span_id": "note_04_p01_b04",
+          "quote": "Faint crackles over the right lower chest.",
+          "start": null
+        }
+      ],
+      "needs_review": false
+    },
+    {
+      "event_id": "e41",
+      "date_or_hospital_day": "2026-03-04 (Hospital Day 3)",
+      "category": "test_result_documented",
+      "statement": "White blood cell count was 9.4 x10^9/L.",
+      "evidence": [
+        {
+          "span_id": "note_04_p01_b05",
+          "quote": "White blood cell count 9.4 x10^9/L.",
+          "start": null
+        }
+      ],
+      "needs_review": false
+    },
+    {
+      "event_id": "e42",
+      "date_or_hospital_day": "2026-03-04 (Hospital Day 3)",
+      "category": "test_result_documented",
+      "statement": "C-reactive protein was 51 mg/L.",
+      "evidence": [
+        {
+          "span_id": "note_04_p01_b05",
+          "quote": "C-reactive protein 51 mg/L.",
+          "start": null
+        }
+      ],
+      "needs_review": false
+    },
+    {
+      "event_id": "e43",
+      "date_or_hospital_day": "2026-03-04 (Hospital Day 3)",
+      "category": "test_result_documented",
+      "statement": "Blood cultures showed no growth to date.",
+      "evidence": [
+        {
+          "span_id": "note_04_p01_b06",
+          "quote": "Blood cultures no growth to date.",
+          "start": null
+        }
+      ],
+      "needs_review": false
+    },
+    {
+      "event_id": "e44",
+      "date_or_hospital_day": "2026-03-04 (Hospital Day 3)",
+      "category": "test_result_documented",
+      "statement": "Sputum culture showed normal respiratory flora.",
+      "evidence": [
+        {
+          "span_id": "note_04_p01_b06",
+          "quote": "Sputum culture: normal respiratory flora.",
+          "start": null
+        }
+      ],
+      "needs_review": false
+    },
+    {
+      "event_id": "e45",
+      "date_or_hospital_day": "2026-03-04 (Hospital Day 3)",
+      "category": "treatment_documented",
+      "statement": "Intravenous Antibiotic B was listed among current medications.",
+      "evidence": [
+        {
+          "span_id": "note_04_p01_b07",
+          "quote": "Intravenous Antibiotic B.",
+          "start": null
+        }
+      ],
+      "needs_review": false
+    },
+    {
+      "event_id": "e46",
+      "date_or_hospital_day": "2026-03-04 (Hospital Day 3)",
+      "category": "other",
+      "statement": "The progress note listed Medication A 10 mg daily, while the nursing note documented that Medication A 5 mg was given that shift; the medication dose is conflicting in the overlapping, unclear time period.",
+      "evidence": [
+        {
+          "span_id": "note_04_p01_b07",
+          "quote": "Medication A 10 mg daily.",
+          "start": null
+        },
+        {
+          "span_id": "note_05_p01_b04",
+          "quote": "Medication A 5 mg given this shift.",
+          "start": null
+        }
+      ],
+      "needs_review": true
+    },
+    {
+      "event_id": "e47",
+      "date_or_hospital_day": "2026-03-04 (Hospital Day 3)",
+      "category": "assessment_documented",
+      "statement": "Community-acquired pneumonia was documented as improving.",
+      "evidence": [
+        {
+          "span_id": "note_04_p01_b08",
+          "quote": "Community-acquired pneumonia, improving.",
+          "start": null
+        }
+      ],
+      "needs_review": false
+    },
+    {
+      "event_id": "e48",
+      "date_or_hospital_day": "2026-03-04 (Hospital Day 3)",
+      "category": "treatment_documented",
+      "statement": "Intravenous Antibiotic B was to be switched to oral Antibiotic B.",
+      "evidence": [
+        {
+          "span_id": "note_04_p01_b09",
+          "quote": "Switch intravenous Antibiotic B to oral Antibiotic B.",
+          "start": null
+        }
+      ],
+      "needs_review": false
+    },
+    {
+      "event_id": "e49",
+      "date_or_hospital_day": "2026-03-04 (Hospital Day 3)",
+      "category": "status",
+      "statement": "Hypoxemia was documented as resolved.",
+      "evidence": [
+        {
+          "span_id": "note_04_p01_b09",
+          "quote": "Hypoxemia: Resolved.",
+          "start": null
+        }
+      ],
+      "needs_review": false
+    },
+    {
+      "event_id": "e50",
+      "date_or_hospital_day": "2026-03-04 (Hospital Day 3)",
+      "category": "treatment_documented",
+      "statement": "Supplemental oxygen was discontinued.",
+      "evidence": [
+        {
+          "span_id": "note_04_p01_b09",
+          "quote": "Supplemental oxygen discontinued.",
+          "start": null
+        }
+      ],
+      "needs_review": false
+    },
+    {
+      "event_id": "e51",
+      "date_or_hospital_day": "2026-03-04 (Hospital Day 3)",
+      "category": "treatment_documented",
+      "statement": "The patient was to ambulate in the hallway with nursing.",
+      "evidence": [
+        {
+          "span_id": "note_04_p01_b09",
+          "quote": "Ambulate in hallway with nursing.",
+          "start": null
+        }
+      ],
+      "needs_review": false
+    },
+    {
+      "event_id": "e52",
+      "date_or_hospital_day": "2026-03-04 (Hospital Day 3)",
+      "category": "status",
+      "statement": "The patient was on room air with saturation 96% at rest and saturation 95% after walking 50 meters without oxygen.",
+      "evidence": [
+        {
+          "span_id": "note_05_p01_b02",
+          "quote": "On room air, saturation 96% at rest. Patient ambulated 50 meters in the hallway without oxygen; saturation 95% after walking.",
+          "start": null
+        }
+      ],
+      "needs_review": false
+    },
+    {
+      "event_id": "e53",
+      "date_or_hospital_day": "2026-03-04 (Hospital Day 3)",
+      "category": "status",
+      "statement": "At 14:00, temperature was 37.2 C, heart rate 82, blood pressure 122/70, and respiratory rate 16.",
+      "evidence": [
+        {
+          "span_id": "note_05_p01_b03",
+          "quote": "Vital signs at 14:00: Temperature 37.2 C. Heart rate 82. Blood pressure 122/70. Respiratory rate 16.",
+          "start": null
+        }
+      ],
+      "needs_review": false
+    },
+    {
+      "event_id": "e54",
+      "date_or_hospital_day": "2026-03-04 (Hospital Day 3)",
+      "category": "treatment_documented",
+      "statement": "The first dose of oral Antibiotic B was given.",
+      "evidence": [
+        {
+          "span_id": "note_05_p01_b04",
+          "quote": "First dose of oral Antibiotic B given.",
+          "start": null
+        }
+      ],
+      "needs_review": false
+    },
+    {
+      "event_id": "e55",
+      "date_or_hospital_day": "2026-03-05 (Hospital Day 4)",
+      "category": "status",
+      "statement": "The patient reported mild residual cough and no shortness of breath at rest.",
+      "evidence": [
+        {
+          "span_id": "note_06_p01_b02",
+          "quote": "Patient reports mild residual cough, no shortness of breath at rest.",
+          "start": null
+        }
+      ],
+      "needs_review": false
+    },
+    {
+      "event_id": "e56",
+      "date_or_hospital_day": "2026-03-05 (Hospital Day 4)",
+      "category": "status",
+      "statement": "Vital signs were afebrile for 48 hours with maximum temperature 37.1 C, heart rate 76, blood pressure 122/70, respiratory rate 16, and oxygen saturation 96% on room air.",
+      "evidence": [
+        {
+          "span_id": "note_06_p01_b03",
+          "quote": "Vital signs: Afebrile for 48 hours, maximum temperature 37.1 C. Heart rate 76. Blood pressure 122/70. Respiratory rate 16. Oxygen saturation 96% on room air.",
+          "start": null
+        }
+      ],
+      "needs_review": false
+    },
+    {
+      "event_id": "e57",
+      "date_or_hospital_day": "2026-03-05 (Hospital Day 4)",
+      "category": "status",
+      "statement": "The patient had faint crackles over the right lower chest and was ambulating independently.",
+      "evidence": [
+        {
+          "span_id": "note_06_p01_b04",
+          "quote": "Faint crackles over the right lower chest. Ambulating independently.",
+          "start": null
+        }
+      ],
+      "needs_review": false
+    },
+    {
+      "event_id": "e58",
+      "date_or_hospital_day": "2026-03-05 (Hospital Day 4)",
+      "category": "test_result_documented",
+      "statement": "Blood cultures showed no growth to date, with final results pending at discharge.",
+      "evidence": [
+        {
+          "span_id": "note_06_p01_b05",
+          "quote": "Blood cultures no growth to date; final results pending at discharge.",
+          "start": null
+        }
+      ],
+      "needs_review": false
+    },
+    {
+      "event_id": "e59",
+      "date_or_hospital_day": "2026-03-05 (Hospital Day 4)",
+      "category": "test_result_documented",
+      "statement": "Sputum culture showed normal respiratory flora.",
+      "evidence": [
+        {
+          "span_id": "note_06_p01_b05",
+          "quote": "Sputum culture: normal respiratory flora.",
+          "start": null
+        }
+      ],
+      "needs_review": false
+    },
+    {
+      "event_id": "e60",
+      "date_or_hospital_day": "2026-03-05 (Hospital Day 4)",
+      "category": "treatment_documented",
+      "statement": "Current medications included oral Antibiotic B.",
+      "evidence": [
+        {
+          "span_id": "note_06_p01_b06",
+          "quote": "Oral Antibiotic B.",
+          "start": null
+        }
+      ],
+      "needs_review": false
+    },
+    {
+      "event_id": "e61",
+      "date_or_hospital_day": "2026-03-05 (Hospital Day 4)",
+      "category": "treatment_documented",
+      "statement": "Medication A was listed as a current daily medication.",
+      "evidence": [
+        {
+          "span_id": "note_06_p01_b06",
+          "quote": "Medication A daily.",
+          "start": null
+        }
+      ],
+      "needs_review": false
+    },
+    {
+      "event_id": "e62",
+      "date_or_hospital_day": "2026-03-05 (Hospital Day 4)",
+      "category": "assessment_documented",
+      "statement": "Community-acquired pneumonia was documented as improved.",
+      "evidence": [
+        {
+          "span_id": "note_06_p01_b07",
+          "quote": "Community-acquired pneumonia, improved.",
+          "start": null
+        }
+      ],
+      "needs_review": false
+    },
+    {
+      "event_id": "e63",
+      "date_or_hospital_day": "2026-03-05 (Hospital Day 4)",
+      "category": "status",
+      "statement": "The condition at discharge was documented as clinically stable and improved.",
+      "evidence": [
+        {
+          "span_id": "note_06_p01_b08",
+          "quote": "Clinically stable, improved.",
+          "start": null
+        }
+      ],
+      "needs_review": false
+    },
+    {
+      "event_id": "e64",
+      "date_or_hospital_day": "2026-03-05 (Hospital Day 4)",
+      "category": "treatment_documented",
+      "statement": "The patient was to be discharged home that day.",
+      "evidence": [
+        {
+          "span_id": "note_06_p01_b09",
+          "quote": "Discharge home today.",
+          "start": null
+        }
+      ],
+      "needs_review": false
+    },
+    {
+      "event_id": "e65",
+      "date_or_hospital_day": "2026-03-05 (Hospital Day 4)",
+      "category": "treatment_documented",
+      "statement": "The patient was to complete oral Antibiotic B for a total of 7 days of antibiotic therapy.",
+      "evidence": [
+        {
+          "span_id": "note_06_p01_b09",
+          "quote": "Complete oral Antibiotic B for a total of 7 days of antibiotic therapy.",
+          "start": null
+        }
+      ],
+      "needs_review": false
+    },
+    {
+      "event_id": "e66",
+      "date_or_hospital_day": "2026-03-05 (Hospital Day 4)",
+      "category": "treatment_documented",
+      "statement": "Medication A was to be continued.",
+      "evidence": [
+        {
+          "span_id": "note_06_p01_b09",
+          "quote": "Medication A continued.",
+          "start": null
+        }
+      ],
+      "needs_review": false
+    },
+    {
+      "event_id": "e67",
+      "date_or_hospital_day": "2026-03-05 (Hospital Day 4)",
+      "category": "follow_up",
+      "statement": "Follow-up with the primary care clinic was planned in 1 week.",
+      "evidence": [
+        {
+          "span_id": "note_06_p01_b09",
+          "quote": "Follow up with primary care clinic in 1 week.",
+          "start": null
+        }
+      ],
+      "needs_review": false
+    },
+    {
+      "event_id": "e68",
+      "date_or_hospital_day": "2026-03-05 (Hospital Day 4)",
+      "category": "follow_up",
+      "statement": "A repeat chest X-ray was planned in 6 weeks.",
+      "evidence": [
+        {
+          "span_id": "note_06_p01_b09",
+          "quote": "Repeat chest X-ray in 6 weeks.",
+          "start": null
+        }
+      ],
+      "needs_review": false
+    },
+    {
+      "event_id": "e69",
+      "date_or_hospital_day": "2026-03-05 (Hospital Day 4)",
+      "category": "follow_up",
+      "statement": "The primary care clinic was to follow up the final blood culture results, which were pending at discharge.",
+      "evidence": [
+        {
+          "span_id": "note_06_p01_b09",
+          "quote": "Final blood culture results pending at discharge; primary care clinic to follow up.",
+          "start": null
+        }
+      ],
+      "needs_review": false
+    }
+  ]
+}

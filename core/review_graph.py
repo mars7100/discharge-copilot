@@ -16,7 +16,6 @@ SYSTEM = f"""You answer a clinician's question about a synthetic hospitalization
 - If passages give different values for the same item, state each value with its note date and cite every such passage; do not describe a change, order or resolution the passages do not state.
 - "Flagged for review" lines come from this review tool, not from the notes: attribute any flagged conflict to the review tool, never say the notes flag it.
 - span_ids: the IDs of the passages your answer relies on, copied exactly. Do not write span IDs in the answer text. Two to four sentences."""
-STOP = set("the a an of to in on was were is are do does did why what when how which and or for with notes note mention".split())
 
 
 class Answer(BaseModel):
@@ -42,22 +41,11 @@ def classify(s: State) -> State:
     return {"intent": "question" if len(q.split()) >= 2 else "unknown"}
 
 
-def toks(text: str) -> set[str]:
-    return {w[:-1] if len(w) > 3 and w.endswith("s") else w
-            for w in re.findall(r"[a-z0-9]+", text.lower()) if w not in STOP}
-
-
 def retrieve(s: State) -> State:
     markers = {marker(sp): sid for sid, sp in s["spans"].items()}
     direct = [markers[m] for m in re.findall(r"\[N\d\d:B\d\d\]", s["question"]) if m in markers]
-    if direct:
-        return {"retrieved": direct}
-    q = toks(s["question"])
-    text = {sid: sp.text for sid, sp in s["spans"].items()}
-    out = [sid for d in s["draft"].discrepancies if q & toks(d.description) for sid in d.source_span_ids]
-    score = {sid: len(q & toks(t)) for sid, t in text.items()}
-    out += sorted((sid for sid in score if score[sid] >= 2), key=score.get, reverse=True)  # ponytail: token overlap, BM25 if recall suffers
-    return {"retrieved": list(dict.fromkeys(out))[:8]}
+    # ponytail: every passage goes to the model (6 short notes); lightweight RAG when cases get bigger
+    return {"retrieved": direct or list(s["spans"])}
 
 
 def note_date(spans: dict[str, SourceSpan], doc_id: str) -> str:

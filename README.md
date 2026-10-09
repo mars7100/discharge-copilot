@@ -50,7 +50,7 @@ run the app or the pipeline with `LLM_MODE=record`, then delete recordings nothi
 - Claims are labelled "unverified": citations are checked to exist and quotes are checked against the notes, but
   whether a passage semantically supports a claim is not checked.
 - The app replays a recorded LLM run of one synthetic case.
-- Retrieval is keyword-based over passage text only (event statements were dropped, a deviation from spec §7.5).
+- No retrieval: every question sends all note passages to the model (fine for 6 short notes; needs a lightweight RAG for larger cases).
 - Discrepancy detection relies on the extraction model's `needs_review` flag (one planted conflict).
 - The clinician types the corrected sentence; there is no LLM-drafted edit.
 - No speech input or output.

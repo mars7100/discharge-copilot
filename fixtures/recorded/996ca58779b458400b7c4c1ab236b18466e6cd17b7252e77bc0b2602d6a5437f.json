@@ -1,0 +1,7 @@
+{
+  "answer": "The 2026-03-04 progress note lists Medication A 10 mg daily, while the nursing note records that 5 mg was given that shift. The review tool flags the doses as conflicting during an unclear overlapping time period; the available notes do not establish why the doses differ. The available notes do not establish that.",
+  "span_ids": [
+    "note_04_p01_b07",
+    "note_05_p01_b04"
+  ]
+}

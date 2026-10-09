@@ -54,7 +54,7 @@ def test_conflict_question_retrieves_both_conflict_spans(case, stub, question): 
     draft, spans, events = case
     out = rg.ask(question, draft, spans, events)
     assert out["intent"] == "question"
-    assert set(CONFLICT) <= set(out["retrieved"]) and len(out["retrieved"]) <= 8
+    assert set(CONFLICT) <= set(out["retrieved"])
     assert len(stub) == 1 and all(sid in prompt(stub[0]) for sid in CONFLICT)
     assert draft.discrepancies[0].status == "open"
 
@@ -86,10 +86,10 @@ def test_one_word_is_unknown_without_llm(case, stub):
     assert out["intent"] == "unknown" and out["cited"] == [] and stub == []
 
 
-def test_no_retrieval_match_is_not_established_without_llm(case, stub):
+def test_question_sends_all_passages(case, stub):  # no keyword retrieval: synonyms like "client" still work
     draft, spans, events = case
-    out = rg.ask("zzzz qqqq", draft, spans, events)
-    assert out["answer"] == rg.NOT_ESTABLISHED and out["cited"] == [] and stub == []
+    out = rg.ask("what was the clients condition?", draft, spans, events)
+    assert out["retrieved"] == list(spans) and len(stub) == 1
 
 
 def test_missing_recording_falls_back_to_live(case, monkeypatch):
@@ -211,18 +211,6 @@ def test_conflict_prompt_flags_discrepancy(case, stub):
     assert "Flagged for review" in user_msg(stub[0])
     assert draft.discrepancies[0].description in user_msg(stub[0])
     assert "cite every such passage" in system_msg(stub[0])
-
-
-def test_non_conflict_prompt_has_no_flag(case, stub):
-    draft, spans, events = case
-    rg.ask(OXYGEN_Q, draft, spans, events)
-    assert len(stub) == 1 and "Flagged for review" not in user_msg(stub[0])
-
-
-def test_off_topic_question_skips_llm(case, stub):
-    draft, spans, events = case
-    out = rg.ask("What is the weather on Mars today?", draft, spans, events)
-    assert out["answer"] == rg.NOT_ESTABLISHED and out["cited"] == [] and stub == []
 
 
 def test_oxygen_question_still_retrieves(case, stub):

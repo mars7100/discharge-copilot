@@ -10,13 +10,14 @@ os.environ.setdefault("LLM_MODE", "replay")  # recorded LLM output: instant, off
 from core.export import NOT_DOCUMENTED, SECTIONS, marker, to_markdown  # noqa: E402
 from core.extract import extract_events  # noqa: E402
 from core.ingest import ingest_dir  # noqa: E402
+from core.review_graph import ask  # noqa: E402
 from core.revise import accept, propose  # noqa: E402
 from core.summarize import generate_draft  # noqa: E402
 
 CASE_DIR = Path(__file__).parent / "fixtures" / "case_001"
 ss = st.session_state
 APP_KEYS = ("documents", "spans", "ingest_warnings", "events", "extract_warnings", "draft", "summary_warnings",
-            "revisions", "clarifications", "pending", "error")
+            "revisions", "clarifications", "pending", "chat", "error")
 
 st.set_page_config(page_title="Discharge Copilot", layout="wide")
 st.title("Discharge Copilot")
@@ -26,7 +27,7 @@ st.error("SYNTHETIC DATA — DEMO ONLY. Not for clinical use.")
 def load_case():
     ss.pop("error", None)  # overwrite app keys only; clearing widget state inside a callback drops clicks
     ss.documents, ss.spans, ss.ingest_warnings = ingest_dir(CASE_DIR)
-    ss.revisions, ss.clarifications, ss.pending = [], [], None
+    ss.revisions, ss.clarifications, ss.pending, ss.chat = [], [], None, []
     try:
         ss.events, ss.extract_warnings = extract_events(ss.documents, ss.spans)
         ss.draft, ss.summary_warnings = generate_draft(ss.events, ss.spans)
@@ -36,7 +37,7 @@ def load_case():
 
 def source_popovers(span_ids, key):
     row = st.container(horizontal=True)
-    for sid in span_ids:
+    for sid in dict.fromkeys(span_ids):
         sp = ss.spans[sid]
         with row.popover(marker(sp), key=f"{key}-{sid}"):
             st.caption(f"`{sp.span_id}` — {sp.filename}, page {sp.page}")
@@ -126,6 +127,21 @@ with right:
             st.rerun()
     for rev in ss.revisions:
         st.caption(f"{rev.revision_id} → {rev.target_claim_id}: {rev.status}")
+
+    st.divider()
+    question = st.text_input("Ask about the notes")
+    if st.button("Ask") and question.strip():
+        try:
+            res = ask(question, ss.draft, ss.spans, ss.events)
+            ss.chat.append((question, res["intent"], res["answer"], res["cited"]))
+        except Exception as e:
+            st.error(f"Question failed: {e}")
+    for i, (q, _intent, ans, cited) in enumerate(ss.chat):
+        st.markdown(f"**{q}**")
+        st.markdown(ans)
+        if cited:
+            st.caption("What the notes state")
+            source_popovers(cited, key=f"qa{i}")
 
     st.divider()
     if draft.status != "approved":

@@ -1,0 +1,7 @@
+{
+  "answer": "The available notes do not establish that. The progress note lists Medication A as 10 mg daily, while the nursing note documents 5 mg given that shift; the notes flag these as conflicting dose documentation.",
+  "span_ids": [
+    "note_04_p01_b07",
+    "note_05_p01_b04"
+  ]
+}

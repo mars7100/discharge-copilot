@@ -1,0 +1,8 @@
+{
+  "answer": "The notes document Medication A as 5 mg daily in the plan, 10 mg daily in a progress note, and 5 mg given that shift in a nursing note [note_01_p01_b11] [note_04_p01_b07] [note_05_p01_b04]. The available notes do not establish that.",
+  "span_ids": [
+    "note_01_p01_b11",
+    "note_04_p01_b07",
+    "note_05_p01_b04"
+  ]
+}

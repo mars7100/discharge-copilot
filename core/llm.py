@@ -21,14 +21,14 @@ def request_key(schema: type[BaseModel], messages: list[dict]) -> str:
 
 
 def _call(schema: type[BaseModel], messages: list[dict]) -> BaseModel:
-    parsed = OpenAI().responses.parse(model=_model(), input=messages, text_format=schema, store=False).output_parsed
+    parsed = OpenAI(timeout=30).responses.parse(model=_model(), input=messages, text_format=schema, store=False).output_parsed
     if parsed is None:
         raise RuntimeError("model returned no parsed output")
     return parsed
 
 
-def parse(schema: type[BaseModel], messages: list[dict]) -> BaseModel:
-    mode = os.environ.get("LLM_MODE", "live")
+def parse(schema: type[BaseModel], messages: list[dict], mode: str | None = None) -> BaseModel:
+    mode = mode or os.environ.get("LLM_MODE", "live")
     path = Path(os.environ.get("LLM_RECORD_DIR", "fixtures/recorded")) / f"{request_key(schema, messages)}.json"
     if mode == "replay":
         if not path.exists():

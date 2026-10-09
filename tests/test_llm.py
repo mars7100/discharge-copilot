@@ -100,3 +100,19 @@ def test_call_raises_when_no_parsed_output(monkeypatch):
     fake_openai(monkeypatch, None)
     with pytest.raises(Exception, match="no parsed output"):
         REAL_CALL(Out, MSGS)
+
+
+def test_call_sets_client_timeout(monkeypatch):
+    init = {}
+    seen = fake_openai(monkeypatch, Out(answer="ok"))
+    Base = llm.OpenAI
+
+    class Recording(Base):
+        def __init__(self, *a, **k):
+            init.update(k)
+            super().__init__(*a, **k)
+
+    monkeypatch.setattr(llm, "OpenAI", Recording)
+    REAL_CALL(Out, MSGS)
+    assert init.get("timeout") == 30
+    assert seen == {"model": "test-model", "input": MSGS, "text_format": Out, "store": False}

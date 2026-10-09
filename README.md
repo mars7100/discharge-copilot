@@ -16,13 +16,13 @@ Click **Load sample case**. By default it runs offline, replaying recorded LLM o
 
 ## Demo script
 
-1. Load sample case → open a citation popover
-2. Show D01 side by side
-3. Ask "Why do the notes mention different doses?"
-4. Ask "What was the reason for the Medication A dose change?"
-5. Propose the 5 mg → 10 mg correction → Accept
-6. Ask "Read the condition at discharge"
-7. Approve → Export
+1. Load sample case → **Summary** tab: open a citation popover
+2. **Needs review** tab: D01 side by side
+3. **Ask about the notes**: "Why do the notes mention different doses?"
+4. **Ask about the notes**: "What was the reason for the Medication A dose change?"
+5. **Needs review**: propose the 5 mg → 10 mg correction → Accept (C11 turns green in Summary)
+6. **Ask about the notes**: "Read the condition at discharge"
+7. **Approve & export**: Approve → Export
 
 Other questions call the LLM live (network + key); failures show "Question failed".
 

@@ -1,6 +1,6 @@
 # Discharge Copilot — prototype status
 
-Updated 2026-10-09 ~17:45 AST. Branch `main` @ `af89027`. 59 tests pass (`.venv/bin/python -m pytest -q -p no:cacheprovider`).
+Updated 2026-10-09 ~17:50 AST. Branch `main` @ `cd8fd3a`. 59 tests pass (`.venv/bin/python -m pytest -q -p no:cacheprovider`).
 Run: `.venv/bin/streamlit run app.py` → Load sample case. App replays recorded LLM output (offline, deterministic).
 
 ## Done
@@ -10,7 +10,7 @@ Run: `.venv/bin/streamlit run app.py` → Load sample case. App replays recorded
 | Ingest | txt + text-PDF → stable span IDs with page numbers |
 | Extraction | one LLM call (~56 s), one fact per event, one flagged event per conflict, quote-gated citations, 1 retry, visible warnings |
 | Draft | cited SummaryClaims, D01 flagged, "Not documented" sections |
-| UI | citation popovers (exact passage), D01 side-by-side, corrected conflict claim turns green |
+| UI | workflow tabs: Summary (collapsible sections) · Needs review (n) · Ask about the notes · Sources · Approve & export (with export preview); citation popovers, D01 side-by-side, corrected conflict claim turns green |
 | Tier B — corrections | propose → diff → accept/reject, clinician-provided label, evidence kept, approval reset |
 | Tier C — questions | LangGraph classify → retrieve (all passages) → answer / read_section / clarify; validated citations; "The available notes do not establish that."; flag attributed to the app |
 | Approve + export | Markdown with synthetic label, status, discrepancies, clarifications, source appendix |
@@ -20,13 +20,13 @@ Run: `.venv/bin/streamlit run app.py` → Load sample case. App replays recorded
 Spec acceptance: T01–T10, T12 automated; T11 passes by design (no speech dependency).
 
 ## Demo script (offline, deterministic)
-1. Load sample case → open a citation popover
-2. Show D01 side by side
-3. Ask "Why do the notes mention different doses?"
-4. Ask "What was the reason for the Medication A dose change?"
-5. Propose the 5 mg → 10 mg correction → Accept
-6. Ask "Read the condition at discharge"
-7. Approve → Export
+1. Load sample case → **Summary** tab: open a citation popover
+2. **Needs review** tab: D01 side by side
+3. **Ask about the notes**: "Why do the notes mention different doses?"
+4. **Ask about the notes**: "What was the reason for the Medication A dose change?"
+5. **Needs review**: propose the 5 mg → 10 mg correction → Accept (C11 turns green in Summary)
+6. **Ask about the notes**: "Read the condition at discharge"
+7. **Approve & export**: Approve → Export
 
 Other questions go live (network + key, a few seconds); failures show "Question failed".
 

@@ -1,6 +1,6 @@
 # Discharge Copilot — prototype status
 
-Updated 2026-10-09 17:07 AST. Branch `main` @ `d6740c0`. 60 tests pass (`.venv/bin/python -m pytest -q -p no:cacheprovider`).
+Updated 2026-10-09 ~17:45 AST. Branch `main` @ `af89027`. 59 tests pass (`.venv/bin/python -m pytest -q -p no:cacheprovider`).
 Run: `.venv/bin/streamlit run app.py` → Load sample case. App replays recorded LLM output (offline, deterministic).
 
 ## Done
@@ -8,13 +8,14 @@ Run: `.venv/bin/streamlit run app.py` → Load sample case. App replays recorded
 |---|---|
 | Fixture | 6 synthetic notes, planted Medication A Day-3 conflict, hand-written `case_001_expected.json` |
 | Ingest | txt + text-PDF → stable span IDs with page numbers |
-| Extraction | one LLM call, quote-gated citations, 1 retry with errors, visible warnings |
+| Extraction | one LLM call (~56 s), one fact per event, one flagged event per conflict, quote-gated citations, 1 retry, visible warnings |
 | Draft | cited SummaryClaims, D01 flagged, "Not documented" sections |
-| UI | citation popovers (exact passage), D01 side-by-side |
+| UI | citation popovers (exact passage), D01 side-by-side, corrected conflict claim turns green |
 | Tier B — corrections | propose → diff → accept/reject, clinician-provided label, evidence kept, approval reset |
-| Tier C — questions | LangGraph classify → retrieve → answer / read_section / clarify; validated citations; "The available notes do not establish that."; flag attributed to the app |
+| Tier C — questions | LangGraph classify → retrieve (all passages) → answer / read_section / clarify; validated citations; "The available notes do not establish that."; flag attributed to the app |
 | Approve + export | Markdown with synthetic label, status, discrepancies, clarifications, source appendix |
-| Infra | record/replay, Responses API (`store=False`), 30 s timeout, error handling |
+| Infra | record/replay, Responses API (`store=False`), 120 s timeout, error handling |
+| Docs + checks | README; `python -m scripts.coverage` (15/16 facts, 24/24 citations, D01 1/1) |
 
 Spec acceptance: T01–T10, T12 automated; T11 passes by design (no speech dependency).
 
@@ -29,10 +30,16 @@ Spec acceptance: T01–T10, T12 automated; T11 passes by design (no speech depen
 
 Other questions go live (network + key, a few seconds); failures show "Question failed".
 
-## Next (prompt for another session — see chat)
-1. README (launch, demo, limitations)
-2. Coverage check vs expected facts (2c)
-3. Extraction prompt fix (2a) + full re-record cascade
+Also recorded: "what was the clients condition?".
+
+## Next
+1. Follow-up questions: send the session's previous Q&A with each new question (chat history in the `answer` prompt); re-record scripted questions.
+2. "Not established" wording: the model tacks the exact sentence onto answers that already say it ("…do not establish why the doses differ. The available notes do not establish that."; "…documentation; The available notes do not establish that."). Fix in the `review_graph.SYSTEM` prompt (e.g. use it only when nothing relevant is documented) + re-record.
+3. Timeout: 120 s applies to every call, so a hanging live question takes up to ~6 min (SDK retries ×2) to fail. Option: default 30 s, `LLM_TIMEOUT` env override for recording; restore the 30 s test.
+4. Lightweight RAG to replace "all passages" when cases get bigger (`ponytail:` in `review_graph.retrieve`); keyword retrieval was removed because it missed synonyms ("client" vs "patient").
+5. OpenAI console: calls don't appear in Logs because of `store=False` (`core/llm.py`); changing it changes every request hash → full re-record.
+6. Accepting a correction leaves `support_status="needs_review"` (only the UI tag turns green); export still lists the claim as needs_review.
+7. Coverage metric is passage-level, so it can't show per-fact extraction gains; sentence-level matching if needed.
 
 ## Backlog — try if time allows
 ### Model-drafted correction from free text (spec §8.3) — ~15 min, high risk
@@ -48,7 +55,5 @@ Other questions go live (network + key, a few seconds); failures show "Question 
 
 ### Smaller items
 - Semantic support check for claims (spec §6.1): LLM verifier pass or keep "unverified" labels.
-- Retrieval over event statements (spec §7.5) — removed in review because a combined event leaked the conflict into an unrelated question; needs a guard (e.g. only single-fact events).
-- Discrepancy matching uses ≥1 shared word (a 2-word rule breaks "Why do the notes mention different doses?"); synonym list or classifier if stricter matching is needed.
 - Dead code: `events` no longer used in `review_graph.retrieve` (keep the `ask(..., events=())` signature for tests).
-- C07 merges unrelated facts (Medication A order + antibiotic dose) — fixed by 2a.
+- C07 merge (Medication A order + antibiotic dose) — fixed by 2a.

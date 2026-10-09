@@ -96,7 +96,8 @@ with right:
         if not claims:
             st.caption(NOT_DOCUMENTED)
         for c in claims:
-            flag = " :orange[**needs review**]" if c.support_status == "needs_review" else ""
+            flag = (" :green[**clarified by clinician — pending approval**]" if c.clinician_clarification_ids
+                    else " :orange[**needs review**]") if c.support_status == "needs_review" else ""
             st.markdown(f"`{c.claim_id}` {c.text}{flag}")
             for k in c.clinician_clarification_ids:
                 st.caption(f":blue[Clinician-provided ({k}): “{clar_text.get(k, '')}”]")

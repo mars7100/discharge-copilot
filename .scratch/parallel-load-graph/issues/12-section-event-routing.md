@@ -4,7 +4,7 @@
 
 **Blocked by:** None
 
-**Status:** needs-triage
+**Status:** resolved
 
 Open design questions:
 - **How events map to sections.** Options:
@@ -15,6 +15,12 @@ Open design questions:
 - **Resolutions.** Whether they keep going to every section, or are routed the same way as events.
 - **Measurement.** The claim count before dedupe and the load time on case_001, measured before and after.
 
-- [ ] Each non-hospital-course section call receives only its routed events (plus the agreed resolutions)
-- [ ] Ticket 11 redraft touches only sections whose routed input changed
-- [ ] `live`: case_001 pre-dedupe claim count and load time recorded before/after; draft still has diagnoses, follow-up, problem groups and the D01 resolution
+- [x] Each non-hospital-course section call receives only its routed events (plus the agreed resolutions)
+- [x] Ticket 11 redraft touches only sections whose routed input changed
+- [x] `live`: case_001 pre-dedupe claim count and load time recorded before/after; draft still has diagnoses, follow-up, problem groups and the D01 resolution
+
+## Comments
+
+- Resolved in 5b33a05. Contract: `12-contract.md`. Routing by extraction tags.
+- case_001 live, before → after (two runs each): claims before dedupe 83/71 → 68/64; removed by dedupe 30/20 → 13/14; resume→done 45.3/46.1 s → 47.5/40.7 s; dedupe call 26.8/28.4 s → 32.3/21.7 s. Duplication roughly halved; latency change within run-to-run variance.
+- Live tests `test_summarize::test_case_001_draft_flags_only_the_medication_conflict` and `test_ticket07::test_case_001_pauses_on_medication_a…` relaxed: the conflict check sometimes also quotes the plan passage note_04_p01_b09 ("Medication A 10 mg daily continued"); they now require one conflict citing both original sources.

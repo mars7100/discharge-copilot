@@ -50,6 +50,15 @@ class ConflictItem(BaseModel):
     quotes: list[EvidenceRef] = Field(min_length=2)  # one verbatim quote per conflicting passage
 
 
+class Resolution(BaseModel):
+    """Clinician's answer to a conflict; keeps every original quote (ticket 07)."""
+    conflict_id: str                # D01.., also the ID claims carry in clinician_clarification_ids
+    text: str
+    chosen_span_id: str | None      # set for a picked value, None for a typed clarification
+    quotes: list[EvidenceRef]
+    provenance: Literal["clinician-provided"] = "clinician-provided"
+
+
 TEMPLATE = json.loads((Path(__file__).parent / "template.json").read_text())["sections"]  # in export order
 Section = Literal[tuple(s["section_id"] for s in TEMPLATE)]
 

@@ -229,7 +229,8 @@ def test_sessions_on_different_cases_are_isolated(client, calls, concurrent):
 def test_case_001_live_load(client):
     sid = create(client)
     events = load(client, sid)
-    assert names(events) == ["per_note", "extraction_done", "draft", "done"], events
+    # ticket 07: case_001 pauses on its conflict; the replayed run includes the resume stream after conflicts_found
+    assert names(events) == ["per_note", "extraction_done", "conflicts_found", "draft", "done"], events
     s = state(client, sid)
     assert len(s["events"]) >= 3 and s["draft"]["claims"]
     assert all(c in s["passages"] for claim in s["draft"]["claims"] for c in claim["evidence_span_ids"])

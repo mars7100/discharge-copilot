@@ -8,6 +8,7 @@ implementer's choice; the stub fills whichever of its fields is annotated list[C
 import json
 import re
 import threading
+import uuid
 from pathlib import Path
 
 import pytest
@@ -117,8 +118,9 @@ def drafts(updates):
     return [v for u in updates for node in u.values() if isinstance(node, dict) for v in node.values() if isinstance(v, Draft)]
 
 
-def stream(docs, spans):
-    return load_graph.stream({"documents": docs, "spans": spans}, stream_mode="updates")
+def stream(docs, spans):  # ticket 07: the graph is checkpointed, so each run needs its own thread_id
+    return load_graph.stream({"documents": docs, "spans": spans}, {"configurable": {"thread_id": str(uuid.uuid4())}},
+                             stream_mode="updates")
 
 
 # ---------- graph seam ----------
@@ -291,22 +293,25 @@ def test_conflicts_become_discrepancies_and_sse_reports_each_note(client, model,
     sse = load(client, sid)
 
     names = [n for n, _ in sse]
-    assert names[len(ids):] == ["extraction_done", "draft", "done"]
+    assert names[len(ids):] == ["extraction_done", "conflicts_found"]  # ticket 07: conflicts pause the load
     per_note = sse[:len(ids)]
     assert {n for n, _ in per_note} == {"note_extracted"}
     assert sorted(d["document_id"] for _, d in per_note) == sorted(ids)  # one per note
     assert all(d == {"document_id": d["document_id"], "event_count": 3, "warnings": []} for _, d in per_note)
     assert sse[len(ids)][1] == {"event_count": 3 * len(ids), "warnings": [], "conflict_count": 2}
 
+    with client.stream("POST", f"/api/sessions/{sid}/resolutions", json={"resolutions": [
+            {"conflict_id": c, "chosen_span_id": None, "clarification": "Clarified."} for c in ("D01", "D02")]}) as r:
+        assert r.status_code == 200
+        resumed = [block.split("\n")[0] for block in "".join(r.iter_text()).strip().split("\n\n")]
+    assert resumed == ["event: draft", "event: done"]
     s = state(client, sid)
     assert [(d["discrepancy_id"], d["description"], sorted(d["source_span_ids"]), d["status"])
             for d in s["draft"]["discrepancies"]] == [
-        ("D01", early[0], sorted(sid_ for sid_, _ in early[1]), "open"),  # numbered by first quote's note/passage
-        ("D02", late[0], sorted(sid_ for sid_, _ in late[1]), "open")]
-    assert s["draft"] == sse[len(ids) + 1][1]["draft"]
+        ("D01", early[0], sorted(sid_ for sid_, _ in early[1]), "clarified_pending_approval"),  # numbered by first quote
+        ("D02", late[0], sorted(sid_ for sid_, _ in late[1]), "clarified_pending_approval")]
     assert [e["problem"] for e in s["events"]] == [PROBLEM] * 3 * len(ids)
     assert not any(e["needs_review"] for e in s["events"])
-    assert not any(c["support_status"] == "needs_review" for c in s["draft"]["claims"])
 
 
 def test_conflict_quotes_validated_with_one_retry(client, model, case):
@@ -317,7 +322,7 @@ def test_conflict_quotes_validated_with_one_retry(client, model, case):
     model.conflicts = lambda attempt: [kept, dropped]  # same invalid output on the retry
     sid = create(client)
     sse = load(client, sid)
-    assert sse[-1][0] == "done", sse
+    assert sse[-1][0] == "conflicts_found", sse  # ticket 07: the kept conflict pauses the load
 
     calls = model.kind_calls("conflict")
     assert len(calls) == 2  # exactly one validation retry
@@ -326,7 +331,7 @@ def test_conflict_quotes_validated_with_one_retry(client, model, case):
     assert any(m["role"] != "assistant" and "note_09_p01_b01" in str(m["content"]) for m in second[len(first):])
 
     s = state(client, sid)
-    assert [sorted(x["source_span_ids"]) for x in s["draft"]["discrepancies"]] == [sorted([a.span_id, b.span_id])]
+    assert [sorted(q["span_id"] for q in x["quotes"]) for x in s["conflicts"]] == [sorted([a.span_id, b.span_id])]
     extraction_done = dict(sse)["extraction_done"]
     assert extraction_done["conflict_count"] == 1
     assert any("note_09_p01_b01" in w for w in extraction_done["warnings"])  # final errors become warnings

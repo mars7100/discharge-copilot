@@ -22,7 +22,6 @@ def test_unknown_span_ids_dropped_and_reported(live_draft):  # T12
     assert any("note_99_p01_b01" in e for e in errors) and any("C02" in e for e in errors)
 
 
-@pytest.mark.skip(reason="restored in 07: conflicts only reach discrepancies until resolutions exist")
 def test_case_001_draft_flags_only_the_medication_conflict(live_draft):
     _, spans, draft, warnings = live_draft
     assert not any("retry failed" in w for w in warnings), warnings

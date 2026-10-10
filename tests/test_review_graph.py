@@ -46,11 +46,12 @@ def test_graph_is_compiled_langgraph():
 @pytest.mark.parametrize("question", ["Why do the notes mention different doses?", RATIONALE_Q])
 def test_conflict_question_retrieves_both_conflict_spans(case, stub, question):  # T04
     draft, spans, events = case
+    before = draft.discrepancies[0].status
     out = rg.ask(question, draft, spans, events)
     assert out["intent"] == "question"
     assert set(CONFLICT) <= set(out["retrieved"])
     assert len(stub) == 1 and all(sid in prompt(stub[0]) for sid in CONFLICT)
-    assert draft.discrepancies[0].status == "open"
+    assert draft.discrepancies[0].status == before  # asking never changes a discrepancy
 
 
 def test_marker_question_is_direct_lookup(case, stub):

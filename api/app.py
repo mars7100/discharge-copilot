@@ -9,8 +9,8 @@ from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from api import sessions
-from api.schemas import Approve, Ask, CreateSession, Propose
-from api.streaming import FIXTURES, stream_load
+from api.schemas import Approve, Ask, CreateSession, Propose, Resolve
+from api.streaming import FIXTURES, run_resume, start, stream_load
 from core.export import to_markdown
 from core.review_graph import ask
 from core.revise import accept, propose
@@ -42,6 +42,29 @@ def load(session_id: str):
     if not sessions.exists(session_id):
         raise HTTPException(404, "unknown session")
     return StreamingResponse(stream_load(session_id), media_type="text/event-stream")
+
+
+@app.post("/api/sessions/{session_id}/resolutions")
+def resolve_conflicts(session_id: str, body: Resolve):
+    with sessions.lock:  # check and un-pause together: a second submit sees "not paused"
+        if (s := sessions.get(session_id)) is None:
+            raise HTTPException(404, "unknown session")
+        if not s["paused"]:
+            raise HTTPException(409, "not paused")
+        quoted = {c["conflict_id"]: {q["span_id"] for q in c["quotes"]} for c in s["conflicts"]}
+        ids = [r.conflict_id for r in body.resolutions]
+        if sorted(ids) != sorted(quoted):
+            raise HTTPException(422, "resolve each conflict exactly once")
+        for r in body.resolutions:
+            if (r.chosen_span_id is None) == (r.clarification is None):
+                raise HTTPException(422, f"{r.conflict_id}: give a chosen span or a clarification, not both or neither")
+            if r.chosen_span_id is not None and r.chosen_span_id not in quoted[r.conflict_id]:
+                raise HTTPException(422, f"{r.conflict_id}: chosen span is not one of its quotes")
+            if r.clarification is not None and not r.clarification.strip():
+                raise HTTPException(422, f"{r.conflict_id}: blank clarification")
+        sessions.update(session_id, paused=False)
+        stream = start(run_resume, session_id, [r.model_dump() for r in body.resolutions])
+    return StreamingResponse(stream, media_type="text/event-stream")
 
 
 @app.get("/api/sessions/{session_id}")
@@ -122,7 +145,7 @@ def export(session_id: str):
     s = reviewable(session_id)
     if s["draft"].status != "approved":
         raise HTTPException(409, "not approved")
-    md = to_markdown(s["draft"], s["spans"], s["documents"], case_id=s["case_id"], clarifications=s["clarifications"])
+    md = to_markdown(s["draft"], s["spans"], s["documents"], case_id=s["case_id"], clarifications=s["clarifications"], resolutions=s["resolutions"])
     return Response(md, media_type="text/markdown",
                     headers={"Content-Disposition": f'attachment; filename="discharge_summary_{s["case_id"]}.md"'})
 

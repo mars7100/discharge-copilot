@@ -14,9 +14,13 @@ interface Clarification { clarification_id: string; statement: string }
 interface Pending { revision: Revision; clarification: Clarification }
 interface Snap {
   case_id: string; passages: Record<string, Passage>; revisions?: Revision[]; clarifications: Clarification[]
-  pending: Pending | null
+  pending: Pending | null; resolutions?: Resolution[]
   draft: { claims: Claim[]; discrepancies: Discrepancy[]; status: string; approved_at: string | null; reviewer: string | null }
 }
+interface ConflictQuote { span_id: string; quote: string; filename: string; date: string | null; hospital_day: number | null; marker: string; text: string }
+interface Conflict { conflict_id: string; description: string; quotes: ConflictQuote[] }
+interface Resolution { conflict_id: string; text: string }
+interface Pick { mode: "pick" | "clarify"; span: string; text: string }
 interface Turn { q: string; a?: string; cited: string[]; failed?: string }
 interface Entry { name: string; seconds: string; details: string[] }
 
@@ -60,6 +64,8 @@ function Marker({ p }: { p: Passage }) {
 }
 
 export default function App() {
+  function resolutionText(id: string) { return snap?.resolutions?.find((r) => r.conflict_id === id)?.text; }
+
   function review(snap: Snap) { // called, not a component: a nested component would remount (and drop focus) on every render
     const { draft, passages, pending } = snap;
     const off = !ready;
@@ -73,6 +79,7 @@ export default function App() {
             <div key={d.discrepancy_id} className="space-y-1 rounded border p-2 text-sm">
               <div><b>{d.discrepancy_id}</b> ({d.status})</div>
               <div>{d.description}</div>
+              {resolutionText(d.discrepancy_id) && <div className="font-medium">Resolved (clinician-provided): {resolutionText(d.discrepancy_id)}</div>}
               <div className="flex flex-wrap gap-2">
                 {d.source_span_ids.map((id) => passages[id] && (
                   <div key={id} className="flex-1 rounded bg-gray-50 p-2">
@@ -156,6 +163,9 @@ export default function App() {
   const area = useRef<HTMLTextAreaElement>(null); // uncontrolled: the claim text is its value, not a text node
   const [statement, setStatement] = useState("");
   const [reviewer, setReviewer] = useState("Simulated resident (demo)");
+  const [conflicts, setConflicts] = useState<Conflict[] | null>(null); // non-null while the load waits for resolutions
+  const [picks, setPicks] = useState<Record<string, Pick>>({});
+  const [resolveFail, setResolveFail] = useState<string | null>(null);
   const session = useRef("");
   const templateFetch = useRef<Promise<Section[]> | null>(null);
 
@@ -219,6 +229,25 @@ export default function App() {
     }
   }
 
+  /** Reads a load or resume SSE stream into the progress list and state. */
+  async function consume(r: Response, sid: string, t0: number) {
+    const reader = r.body!.getReader();
+    const text = new TextDecoder();
+    const sse = new SseDecoder();
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      for (const f of sse.push(text.decode(value, { stream: true }))) {
+        const d = f.data ? JSON.parse(f.data) : {};
+        setEntries((es) => [...es, { name: f.name, seconds: ((Date.now() - t0) / 1000).toFixed(1), details: describe(f.name, d) }]);
+        if (f.name === "error") setError(String(d.detail));
+        if (f.name === "done") setReady(true);
+        if (f.name === "conflicts_found") { setConflicts(d.conflicts); setPicks({}); setResolveFail(null); }
+        if (f.name === "draft") showDraft(sid).catch((e) => setError(String(e.message)));
+      }
+    }
+  }
+
   async function run(sid?: string) {
     setRunning(true);
     setError(null);
@@ -227,6 +256,7 @@ export default function App() {
     setReady(false);
     setTurns([]);
     setFail(null);
+    setConflicts(null);
     const t0 = Date.now();
     try {
       if (!sid) {
@@ -238,20 +268,7 @@ export default function App() {
       session.current = sid;
       const r = await fetch(`/api/sessions/${sid}/load`, { method: "POST" });
       if (!r.ok || !r.body) throw new Error(`load failed: ${r.status}`);
-      const reader = r.body.getReader();
-      const text = new TextDecoder();
-      const sse = new SseDecoder();
-      for (;;) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        for (const f of sse.push(text.decode(value, { stream: true }))) {
-          const d = f.data ? JSON.parse(f.data) : {};
-          setEntries((es) => [...es, { name: f.name, seconds: ((Date.now() - t0) / 1000).toFixed(1), details: describe(f.name, d) }]);
-          if (f.name === "error") setError(String(d.detail));
-          if (f.name === "done") setReady(true);
-          if (f.name === "draft") showDraft(sid).catch((e) => setError(String(e.message)));
-        }
-      }
+      await consume(r, sid, t0);
     } catch (e) {
       setError(String((e as Error).message));
     } finally {
@@ -259,7 +276,35 @@ export default function App() {
     }
   }
 
-  const step = entries.some((e) => e.name === "draft") ? null : entries.some((e) => e.name === "extraction_done") ? "Drafting" : "Extracting";
+  const resolved = (c: Conflict) => { const p = picks[c.conflict_id]; return !!p && (p.mode === "pick" ? !!p.span : !!p.text.trim()); };
+
+  async function submitResolutions() {
+    setResolveFail(null);
+    const sid = session.current;
+    const body = conflicts!.map((c) => { const p = picks[c.conflict_id];
+      return p.mode === "pick" ? { conflict_id: c.conflict_id, chosen_span_id: p.span, clarification: null }
+                               : { conflict_id: c.conflict_id, chosen_span_id: null, clarification: p.text.trim() }; });
+    try {
+      const r = await fetch(`/api/sessions/${sid}/resolutions`, { ...JSON_POST, body: JSON.stringify({ resolutions: body }) });
+      if (!r.ok || !r.body) {
+        const detail = (await r.json().catch(() => null))?.detail;
+        throw new Error(typeof detail === "string" ? detail : `resolve failed: ${r.status}`);
+      }
+      setConflicts(null);
+      setRunning(true);
+      try {
+        await consume(r, sid, Date.now());
+      } catch (e) {
+        setError(String((e as Error).message));
+      } finally {
+        setRunning(false);
+      }
+    } catch (e) {
+      setResolveFail(String((e as Error).message));
+    }
+  }
+
+  const step = entries.some((e) => e.name === "draft") ? null : conflicts ? "Waiting for conflict resolution" : entries.some((e) => e.name === "extraction_done") ? "Drafting" : "Extracting";
 
   return (
     <main className="mx-auto max-w-3xl space-y-4 p-4">
@@ -278,7 +323,7 @@ export default function App() {
           </div>
         </Alert>
       )}
-      {running && step && <div className="flex items-center gap-2"><Spinner size="sm" /><span>{step}…</span></div>}
+      {(running || conflicts) && step && <div className="flex items-center gap-2">{!conflicts && <Spinner size="sm" />}<span>{step}{conflicts ? "" : "…"}</span></div>}
       <ol className="space-y-1 text-sm">
         {entries.map((e, i) => (
           <li key={i} className="flex flex-wrap gap-2">
@@ -288,6 +333,40 @@ export default function App() {
           </li>
         ))}
       </ol>
+      {conflicts && (
+        <section className="space-y-3">
+          <h2 className="text-lg font-semibold">Resolve conflicts</h2>
+          {conflicts.map((c) => {
+            const p = picks[c.conflict_id];
+            const set = (v: Pick) => setPicks({ ...picks, [c.conflict_id]: v });
+            return (
+              <div key={c.conflict_id} className="space-y-2 rounded border p-2 text-sm">
+                <div><b>{c.conflict_id}</b> {c.description}</div>
+                {c.quotes.map((q) => (
+                  <div key={q.span_id} className="rounded bg-gray-50 p-2">
+                    <div className="font-mono text-xs">{q.marker} {q.filename} · {q.date} (Hospital Day {q.hospital_day})</div>
+                    <div>{q.text}</div>
+                    <label className="flex items-center gap-1">
+                      <input type="radio" name={c.conflict_id} checked={p?.mode === "pick" && p.span === q.span_id}
+                        onChange={() => set({ mode: "pick", span: q.span_id, text: p?.text ?? "" })} />
+                      Use this value
+                    </label>
+                  </div>
+                ))}
+                <label className="flex items-center gap-1">
+                  <input type="radio" name={c.conflict_id} checked={p?.mode === "clarify"}
+                    onChange={() => set({ mode: "clarify", span: "", text: p?.text ?? "" })} />
+                  Clarify
+                </label>
+                <TextInput aria-label={`Clarification ${c.conflict_id}`} value={p?.text ?? ""}
+                  onChange={(e) => set({ mode: "clarify", span: "", text: e.target.value })} />
+              </div>
+            );
+          })}
+          {resolveFail && <div className="text-sm text-red-700">{resolveFail}</div>}
+          <Button disabled={!conflicts.every(resolved)} onClick={submitResolutions}>Resolve and continue</Button>
+        </section>
+      )}
       {snap && (
         <div className="font-semibold">
           {snap.draft.status === "approved"
@@ -309,8 +388,8 @@ export default function App() {
                   ? <Badge color="success" className="ml-2 inline-flex">clarified by clinician — pending approval</Badge>
                   : <Badge color="warning" className="ml-2 inline-flex">needs review</Badge>)}
                 {c.clinician_clarification_ids.map((id) => {
-                  const k = snap.clarifications.find((x) => x.clarification_id === id);
-                  return k && <div key={id} className="ml-4 text-sm italic">Clinician-provided ({id}): "{k.statement}"</div>;
+                  const k = snap.clarifications.find((x) => x.clarification_id === id)?.statement ?? resolutionText(id);
+                  return k && <div key={id} className="ml-4 text-sm italic">Clinician-provided ({id}): "{k}"</div>;
                 })}
               </div>
             )) : <div className="italic">Not documented in the supplied notes.</div>}

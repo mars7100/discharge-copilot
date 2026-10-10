@@ -2,15 +2,15 @@
 from pydantic import BaseModel
 
 from core import llm
-from core.models import TEMPLATE, ClinicalEvent, Discrepancy, Draft, SourceSpan, SummaryClaim
+from core.models import TEMPLATE, ClinicalEvent, Draft, Resolution, SourceSpan, SummaryClaim
 
 SYSTEM = """You draft a discharge summary for a synthetic hospitalization from extracted, documented events.
 - Use only the supplied events. No general medical knowledge, no rationale or detail the events do not state.
 - One documented fact per claim, one or two short sentences. Hospital course claims in chronological order.
 - evidence_span_ids: copy span IDs exactly from the evidence of the events the claim is based on.
 - Sections: """ + ", ".join(f"{s['section_id']} ({s['purpose']})" for s in TEMPLATE) + """. Omit a section if nothing is documented for it.
-- If events conflict (needs_review), state both documented values with their sources and do not resolve or explain the conflict.
-- claim_id any placeholder; clinician_clarification_ids empty; support_status "unverified"."""
+- Resolved facts (lines starting with a D ID) are clinician-provided: state each as written, cite its spans, and put its ID in clinician_clarification_ids. Never mention the superseded values as unresolved.
+- claim_id any placeholder; clinician_clarification_ids empty except for resolved facts; support_status "unverified"."""
 TIMEOUT = 35
 
 
@@ -35,11 +35,15 @@ def check_claims(claims: list[SummaryClaim], spans: dict[str, SourceSpan]) -> tu
     return valid, errors
 
 
-def generate_draft(events: list[ClinicalEvent], spans: dict[str, SourceSpan]) -> tuple[Draft, list[str]]:
+def generate_draft(events: list[ClinicalEvent], spans: dict[str, SourceSpan],
+                   resolutions: list[Resolution] = ()) -> tuple[Draft, list[str]]:
     """Returns (draft, final-attempt validation errors). Retries once on errors or exceptions."""
-    lines = [f"{e.event_id} | {e.date_or_hospital_day} | {e.category}{' | NEEDS_REVIEW' if e.needs_review else ''} | "
-             f"{e.statement} | spans: {', '.join(r.span_id for r in e.evidence)}" for e in events]
+    lines = [f"{e.event_id} | {e.date_or_hospital_day} | {e.category} | {e.statement} | "
+             f"spans: {', '.join(r.span_id for r in e.evidence)}" for e in events]
+    lines += [f"{r.conflict_id} | RESOLVED (clinician-provided) | {r.text} | spans: {', '.join(q.span_id for q in r.quotes)}"
+              for r in resolutions]
     messages = [{"role": "system", "content": SYSTEM}, {"role": "user", "content": "Events:\n" + "\n".join(lines)}]
+    known = {r.conflict_id for r in resolutions}
     claims, errors = [], []
     for attempt in range(2):
         try:
@@ -51,9 +55,14 @@ def generate_draft(events: list[ClinicalEvent], spans: dict[str, SourceSpan]) ->
                 raise SummaryError(f"LLM call failed: {e}") from e
             errors = errors + [f"retry failed: {e}"]
             break
-        numbered = [c.model_copy(update={"claim_id": f"C{i:02d}", "clinician_clarification_ids": []})
-                    for i, c in enumerate(result.claims, 1)]
+        numbered = [c.model_copy(update={"claim_id": f"C{i:02d}"}) for i, c in enumerate(result.claims, 1)]
         claims, errors = check_claims(numbered, spans)
+        errors += [f"{c.claim_id}: unknown clinician_clarification_id {i}, removed" for c in claims
+                   for i in c.clinician_clarification_ids if i not in known]
+        claims = [c.model_copy(update={"clinician_clarification_ids": [i for i in c.clinician_clarification_ids if i in known]})
+                  for c in claims]
+        errors += [f"{r.conflict_id}: resolution not carried by any claim (set clinician_clarification_ids)"
+                   for r in resolutions if not any(r.conflict_id in c.clinician_clarification_ids for c in claims)]
         if not errors:
             break
         if not attempt:
@@ -62,11 +71,15 @@ def generate_draft(events: list[ClinicalEvent], spans: dict[str, SourceSpan]) ->
                 {"role": "user", "content": "Validation errors:\n" + "\n".join(errors) + "\nReturn a corrected full result."}]
     if not claims:
         raise SummaryError("no valid claims: " + "; ".join(errors))
-    flagged = [e for e in events if e.needs_review]
-    review_sets = [{r.span_id for r in e.evidence} for e in flagged]  # claim must cite all spans of a flagged event
-    claims = [c.model_copy(update={"support_status": "needs_review"
-                                   if any(s <= set(c.evidence_span_ids) for s in review_sets) else "unverified"})
-              for c in claims]
-    discrepancies = [Discrepancy(discrepancy_id=f"D{i:02d}", description=e.statement,
-                                 source_span_ids=[r.span_id for r in e.evidence]) for i, e in enumerate(flagged, 1)]
-    return Draft(claims=claims, discrepancies=discrepancies), errors
+    by_id = {r.conflict_id: r for r in resolutions}
+    out = []
+    for c in claims:
+        quoted = [q.span_id for i in c.clinician_clarification_ids for q in by_id[i].quotes]
+        out.append(c.model_copy(update={"evidence_span_ids": list(dict.fromkeys(c.evidence_span_ids + quoted)),
+                                        "support_status": "needs_review" if quoted else "unverified"}))
+    for r in resolutions:  # the model dropped it twice: code states the resolution itself
+        if not any(r.conflict_id in c.clinician_clarification_ids for c in out):
+            out.append(SummaryClaim(claim_id=f"C{len(out) + 1:02d}", section="hospital_course", text=r.text,
+                                    evidence_span_ids=list(dict.fromkeys(q.span_id for q in r.quotes)),
+                                    clinician_clarification_ids=[r.conflict_id], support_status="needs_review"))
+    return Draft(claims=out), errors

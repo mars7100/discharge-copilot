@@ -13,7 +13,8 @@ def create(case_id: str) -> str:
     with lock:
         _sessions[sid] = {"session_id": sid, "case_id": case_id, "documents": [], "spans": {}, "events": [],
                           "draft": None, "chat_thread_id": str(uuid.uuid4()), "load_running": False,
-                          "revisions": [], "clarifications": [], "pending": None}
+                          "revisions": [], "clarifications": [], "pending": None,
+                          "conflicts": [], "resolutions": [], "paused": False, "load_thread_id": None}
     return sid
 
 
@@ -46,6 +47,7 @@ def state(sid: str) -> dict | None:
         return {**{k: v for k, v in s.items() if k != "spans"}, "documents": [d.model_dump(mode="json") for d in s["documents"]],
                 "events": [e.model_dump(mode="json") for e in s["events"]],
                 "draft": s["draft"] and s["draft"].model_dump(mode="json"),
+                "resolutions": [r.model_dump(mode="json") for r in s["resolutions"]],
                 "revisions": [r.model_dump(mode="json") for r in s["revisions"]],
                 "clarifications": [c.model_dump(mode="json") for c in s["clarifications"]],
                 "pending": s["pending"] and {"revision": s["pending"][0].model_dump(mode="json"),

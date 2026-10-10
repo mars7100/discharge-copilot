@@ -1,14 +1,17 @@
-"""Load pipeline as a LangGraph graph: [extract_note x N, conflict_check] -> merge -> draft (spec: Load graph)."""
+"""Load pipeline as a LangGraph graph: [extract_note x N, conflict_check] -> merge -> resolve -> draft (spec: Load graph)."""
 import operator
 from typing import Annotated, TypedDict
 
+from langgraph.checkpoint.memory import InMemorySaver
+from langgraph.checkpoint.serde.jsonplus import JsonPlusSerializer
 from langgraph.graph import END, START, StateGraph
-from langgraph.types import Send
+from langgraph.types import Send, interrupt
 
 import core.extract
+import core.models
 import core.summarize
 from core.conflicts import find_conflicts
-from core.models import ClinicalEvent, ConflictItem, Discrepancy, Document, Draft, SourceSpan
+from core.models import ClinicalEvent, ConflictItem, Discrepancy, Document, Draft, Resolution, SourceSpan
 
 
 class LoadState(TypedDict, total=False):
@@ -20,6 +23,7 @@ class LoadState(TypedDict, total=False):
     events: list[ClinicalEvent]
     extract_warnings: list[str]
     discrepancies: list[Discrepancy]
+    resolutions: list[Resolution]
     draft: Draft
     draft_warnings: list[str]
 
@@ -61,11 +65,34 @@ def merge(state: LoadState) -> dict:
     conflicts = sorted(state["conflicts"], key=first)
     discrepancies = [Discrepancy(discrepancy_id=f"D{i:02d}", description=c.description,
                                  source_span_ids=[q.span_id for q in c.quotes]) for i, c in enumerate(conflicts, 1)]
-    return {"events": events, "extract_warnings": warnings + state["conflict_warnings"], "discrepancies": discrepancies}
+    conflicts = [c.model_copy(update={"conflict_id": d.discrepancy_id}) for c, d in zip(conflicts, discrepancies)]  # IDs follow the final order
+    return {"events": events, "conflicts": conflicts, "extract_warnings": warnings + state["conflict_warnings"], "discrepancies": discrepancies}
+
+
+def resolve(state: LoadState) -> dict:
+    """Pauses on conflicts; resumes with [{conflict_id, chosen_span_id | None, clarification | None}], one per conflict (the API validates)."""
+    if not state["conflicts"]:
+        return {"resolutions": []}
+    answers = {a["conflict_id"]: a for a in interrupt(state["conflicts"])}
+    resolutions = []
+    for c in state["conflicts"]:
+        a = answers[c.conflict_id]
+        text = (f"{c.description}: {next(q.quote for q in c.quotes if q.span_id == a['chosen_span_id'])}"
+                if a["chosen_span_id"] else a["clarification"].strip())
+        resolutions.append(Resolution(conflict_id=c.conflict_id, text=text, chosen_span_id=a["chosen_span_id"], quotes=c.quotes))
+    return {"resolutions": resolutions,
+            "discrepancies": [d.model_copy(update={"status": "clarified_pending_approval"}) for d in state["discrepancies"]]}
+
+
+def overlaps(e: ClinicalEvent, conflicts: list[ConflictItem]) -> bool:
+    """True when any evidence quote overlaps a conflict quote in the same span."""
+    return any(r.span_id == q.span_id and r.start < q.start + len(q.quote) and q.start < r.start + len(r.quote)
+               for r in e.evidence for c in conflicts for q in c.quotes)
 
 
 def draft(state: LoadState) -> dict:
-    d, warnings = core.summarize.generate_draft(state["events"], state["spans"])
+    events = [e for e in state["events"] if not overlaps(e, state["conflicts"])]  # drafting never sees raw conflicting events
+    d, warnings = core.summarize.generate_draft(events, state["spans"], state["resolutions"])
     return {"draft": d.model_copy(update={"discrepancies": state["discrepancies"]}), "draft_warnings": warnings}
 
 
@@ -74,12 +101,16 @@ def build():
     g.add_node("extract_note", extract_note)
     g.add_node("conflict_check", conflict_check)
     g.add_node("merge", merge)
+    g.add_node("resolve", resolve)
     g.add_node("draft", draft)
     g.add_conditional_edges(START, fan_out, ["extract_note", "conflict_check"])
     g.add_edge(["extract_note", "conflict_check"], "merge")
-    g.add_edge("merge", "draft")
+    g.add_edge("merge", "resolve")
+    g.add_edge("resolve", "draft")
     g.add_edge("draft", END)
-    return g.compile().with_config(max_concurrency=6)
+    types = [("core.models", n) for n in vars(core.models) if getattr(getattr(core.models, n), "__module__", None) == "core.models"]  # state types restored from memory
+    # ponytail: in-process memory, lost on restart
+    return g.compile(checkpointer=InMemorySaver(serde=JsonPlusSerializer(allowed_msgpack_modules=types))).with_config(max_concurrency=6)
 
 
 load_graph = build()

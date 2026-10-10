@@ -17,3 +17,13 @@ class Propose(BaseModel):
 
 class Approve(BaseModel):
     reviewer: str = Field(pattern=r"\S")
+
+
+class ResolutionIn(BaseModel):
+    conflict_id: str
+    chosen_span_id: str | None = None
+    clarification: str | None = None
+
+
+class Resolve(BaseModel):
+    resolutions: list[ResolutionIn]

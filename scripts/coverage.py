@@ -1,13 +1,17 @@
 """Compare the model's draft for case_001 against case_001_expected.json. Run: .venv/bin/python -m scripts.coverage"""
 import json
 import os
+import uuid
 from pathlib import Path
+
+from langgraph.types import Command
 
 from core.ingest import ingest_dir
 from core.load_graph import load_graph
 from core.validate import locate_quote
 
 ROOT = Path(__file__).parent.parent
+CLARIFICATION = "Medication A 5 mg initially, 10 mg from Day 3"  # same as the live fixture: this dev tool resolves, the app never does
 
 
 def quote_spans(evidence, spans) -> set[str]:
@@ -21,7 +25,13 @@ def coverage(spans=None, draft=None) -> dict:
     expected = json.loads((ROOT / "fixtures" / "case_001_expected.json").read_text())
     if draft is None:
         docs, spans, _ = ingest_dir(ROOT / "fixtures" / "case_001")
-        draft = load_graph.invoke({"documents": docs, "spans": spans})["draft"]
+        config = {"configurable": {"thread_id": str(uuid.uuid4())}}
+        out = load_graph.invoke({"documents": docs, "spans": spans}, config)
+        if "__interrupt__" in out:
+            answers = [{"conflict_id": c.conflict_id, "chosen_span_id": None, "clarification": CLARIFICATION}
+                       for c in out["__interrupt__"][0].value]
+            out = load_graph.invoke(Command(resume=answers), config)
+        draft = out["draft"]
     cited = {sid for c in draft.claims for sid in c.evidence_span_ids}
     facts = expected["expected_facts"]
     missing = [f["fact_id"] for f in facts if not quote_spans(f["evidence"], spans) & cited]

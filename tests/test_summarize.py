@@ -1,16 +1,10 @@
-import os
-from pathlib import Path
-
 import pytest
-from streamlit.testing.v1 import AppTest
 
 from core.export import to_markdown
 from core.models import SummaryClaim
 from core.summarize import check_claims
 
 pytestmark = pytest.mark.live  # uses the model; run with: pytest -m live
-
-ROOT = Path(__file__).parent.parent
 
 
 @pytest.fixture
@@ -46,19 +40,3 @@ def test_export_labels_and_appendix(live_draft):
                                         "reviewer": "Simulated resident"})
     assert "APPROVED by Simulated resident" in to_markdown(approved, spans, docs)
 
-
-def test_app_load_cite_approve(monkeypatch):
-    monkeypatch.chdir(ROOT)
-    at = AppTest.from_file(str(ROOT / "app.py"), default_timeout=30).run()
-    at.sidebar.button[0].click().run()  # Load sample case
-    assert not at.exception and "Draft" in at.subheader[0].value
-    passage = at.session_state["spans"]["note_05_p01_b04"].text.splitlines()[0]
-    assert any(passage in m.value for m in at.markdown)  # exact passage rendered (popover / needs-review)
-    draft_before = at.session_state["draft"]
-    at.text_area[0].set_value("Medication A: 5 mg initially, 10 mg from Hospital Day 3 (clinician-provided).")
-    next(b for b in at.button if b.label == "Propose correction").click().run()
-    assert at.session_state["draft"] == draft_before  # T06: unchanged before accept
-    next(b for b in at.button if b.label == "Accept").click().run()
-    assert at.session_state["draft"] != draft_before and not at.exception
-    next(b for b in at.button if b.label == "Approve draft").click().run()
-    assert "Approved" in at.subheader[0].value

@@ -2,7 +2,6 @@
 from pathlib import Path
 
 import pytest
-from streamlit.testing.v1 import AppTest
 
 from core import llm
 from core import review_graph as rg
@@ -129,18 +128,7 @@ def test_rationale_live(case):  # T05
     assert not any(w in out["answer"].lower() for w in ("because", "due to", "in order to", "titrat"))
 
 
-def test_app_ask_read_section(monkeypatch):
-    monkeypatch.chdir(ROOT)
-    at = AppTest.from_file(str(ROOT / "app.py"), default_timeout=30).run()
-    at.sidebar.button[0].click().run()  # Load sample case
-    app_ask(at, "Read the condition at discharge")
-    claim = next(c for c in at.session_state["draft"].claims if c.section == "condition_at_discharge")
-    assert not at.exception and any(claim.text in m.value for m in at.markdown)
-
-
 # --- Review fixes (tier-c) ---
-from core.models import Draft  # noqa: E402
-
 OXYGEN_Q = "When was supplemental oxygen discontinued?"
 
 
@@ -150,55 +138,6 @@ def user_msg(call):
 
 def system_msg(call):
     return next(m["content"] for m in call["messages"] if m["role"] == "system")
-
-
-def app_loaded(monkeypatch):
-    monkeypatch.chdir(ROOT)
-    at = AppTest.from_file(str(ROOT / "app.py"), default_timeout=30).run()
-    at.sidebar.button[0].click().run()  # Load sample case
-    return at
-
-
-def app_ask(at, question):
-    next(c for c in at.chat_input if c.placeholder == "Ask about the notes").set_value(question).run()
-    return at
-
-
-def test_app_duplicate_citations_do_not_crash(monkeypatch):
-    at = app_ask(app_loaded(monkeypatch), "Read the Follow-up")
-    assert not at.exception, at.exception
-    app_ask(at, "Read the condition at discharge")
-    assert not at.exception, at.exception
-
-
-def test_app_failed_question_shows_error_and_keeps_rendering(monkeypatch):
-    at = app_loaded(monkeypatch)
-
-    def boom(*a, **k):
-        raise RuntimeError("boom")
-
-    monkeypatch.setattr(llm, "parse", boom)  # after load: extraction/summary already done
-    app_ask(at, "Why do the notes mention different doses?")
-    assert not at.exception, at.exception
-    assert any("Question failed" in e.value for e in at.error)
-    assert any(b.label == "Approve draft" for b in at.button)
-
-
-def test_app_chat_history_stores_only_display_data(monkeypatch):
-    at = app_ask(app_loaded(monkeypatch), "Read the condition at discharge")
-    chat = at.session_state["chat"]
-    assert chat
-    for entry in chat:
-        assert isinstance(entry, (tuple, dict))
-        values = list(entry.values()) if isinstance(entry, dict) else list(entry)
-        values += [v for x in values if isinstance(x, dict) for v in x.values()]
-        assert not any(isinstance(v, Draft) for v in values)
-
-
-def test_app_no_duplicate_ask_heading(monkeypatch):
-    at = app_loaded(monkeypatch)
-    assert not any(m.value == "### Ask about the notes" for m in at.markdown)
-    assert any(c.placeholder == "Ask about the notes" for c in at.chat_input)
 
 
 def test_conflict_prompt_flags_discrepancy(case, stub):
@@ -254,24 +193,3 @@ def test_follow_up_sends_last_three_turns(case, stub):
     assert "Earlier answers are not evidence" in last[1]["content"]
     rg.ask("What was given on day 1?", draft, spans, events, thread_id="t-other")
     assert [m["role"] for m in stub[-1]["messages"]] == ["system", "user"]  # threads don't share history
-
-
-def test_app_follow_up_carries_history_and_reload_resets_it(monkeypatch):
-    at = app_loaded(monkeypatch)
-    stub, real = [], llm.parse
-
-    def fake(schema, messages, timeout):  # questions only
-        if schema is not rg.Answer:
-            return real(schema, messages, timeout)
-        stub.append({"messages": messages})
-        return rg.Answer(answer="x", span_ids=CONFLICT)
-
-    monkeypatch.setattr(llm, "parse", fake)
-    app_ask(at, "Read the condition at discharge")
-    app_ask(at, "What changed on day 3?")
-    assert not at.exception, at.exception
-    roles = [m["role"] for m in stub[-1]["messages"]]
-    assert roles == ["system", "system", "user", "assistant", "user"]
-    at.sidebar.button[0].click().run()  # Load sample case again: new conversation
-    app_ask(at, "What changed on day 3?")
-    assert [m["role"] for m in stub[-1]["messages"]] == ["system", "user"]

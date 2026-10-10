@@ -9,7 +9,6 @@ dependencies = [
     "pydantic>=2.14.0",
     "pymupdf>=1.28.2",
     "python-dotenv>=1.2.4",
-    "streamlit>=1.65.0",
     "uvicorn[standard]>=0.52.4",
 ]
 

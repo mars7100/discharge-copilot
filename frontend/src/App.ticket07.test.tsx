@@ -3,7 +3,7 @@
  * fetch is stubbed per route; load and resolutions streams are fed by hand.
  * Controls by accessible name: radios /use this value/i (one per quote, in order) and /clarify/i (one per conflict),
  * the clarification text inputs (the only textboxes while paused; the last one belongs to the last conflict),
- * and the button /resolve and continue/i.
+ * the panel button /review resolutions/i and, on the review summary (ticket 14), /start drafting/i.
  */
 import { afterEach, expect, it, vi } from "vitest";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
@@ -95,7 +95,8 @@ function stubApi(load: ReturnType<typeof sseStream>, resolutions: () => Response
 }
 
 const pageText = () => document.body.textContent ?? "";
-const submitButton = () => screen.getByRole("button", { name: /resolve and continue/i }) as HTMLButtonElement;
+const submitButton = () => screen.getByRole("button", { name: /review resolutions/i }) as HTMLButtonElement;
+const startDrafting = () => screen.getByRole("button", { name: /start drafting/i }) as HTMLButtonElement;
 
 async function pausedOn(conflicts: unknown[], resolutions: () => Response) {
   const load = sseStream();
@@ -147,6 +148,7 @@ it("shows each conflict's passages and waits for every conflict to be resolved b
   expect(submitButton().disabled).toBe(false);
 
   await user.click(submitButton());
+  await user.click(startDrafting());
   await waitFor(() => expect(fetching.mock.calls.some(([u, i]) =>
     String(u).endsWith("/api/sessions/S1/resolutions") && i?.method === "POST")).toBe(true));
   const [, init] = fetching.mock.calls.find(([u]) => String(u).endsWith("/resolutions"))!;
@@ -172,12 +174,13 @@ it("shows each conflict's passages and waits for every conflict to be resolved b
   expect(line.textContent).toContain(PICKED);
 });
 
-it("keeps the panel and shows the error when the submit fails", async () => {
+it("keeps the review summary and shows the error when the submit fails", async () => {
   const { user } = await pausedOn([D01], () => json({ detail: "not paused" }, 409));
   await user.click(screen.getAllByRole("radio", { name: /clarify/i })[0]);
   await user.type(screen.getAllByRole("textbox").at(-1)!, "Medication A 5 mg initially, 10 mg from Day 3");
   await user.click(submitButton());
+  await user.click(startDrafting());
   await waitFor(() => expect(pageText()).toMatch(/not paused/));
-  expect(screen.getAllByText(/resolve conflicts/i).length).toBeGreaterThan(0);
-  expect(submitButton()).toBeTruthy();
+  expect(screen.getByRole("heading", { name: /review resolutions/i })).toBeTruthy();
+  expect(startDrafting()).toBeTruthy();
 });

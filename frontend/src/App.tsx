@@ -173,6 +173,8 @@ export default function App() {
   const [conflicts, setConflicts] = useState<Conflict[] | null>(null); // non-null while the load waits for resolutions
   const [picks, setPicks] = useState<Record<string, Pick>>({});
   const [resolveFail, setResolveFail] = useState<string | null>(null);
+  const [reviewing, setReviewing] = useState(false); // the summary replaces the panel until Edit or Start drafting
+  const [starting, setStarting] = useState(false); // the resolutions POST is in flight
   const [early, setEarly] = useState<Record<string, EarlyClaim[]>>({}); // streamed sections, shown until the final draft
   const [earlyPassages, setEarlyPassages] = useState<Record<string, Passage>>({});
   const earlyFetched = useRef(false);
@@ -250,7 +252,7 @@ export default function App() {
         if (f.name === "note_retrying") retried.add(d.document_id);
         if (f.name === "error") setError(String(d.detail));
         if (f.name === "done") setReady(true);
-        if (f.name === "conflicts_found") { setConflicts(d.conflicts); setPicks({}); setResolveFail(null); }
+        if (f.name === "conflicts_found") { setConflicts(d.conflicts); setPicks({}); setResolveFail(null); setReviewing(false); }
         if (f.name === "section_drafted") {
           const claims = (d.claims ?? []).map((c: EarlyClaim) => ({ ...c, problem: d.problem }));
           setEarly((e) => ({ ...e, [d.section_id]: [...(d.problem ? e[d.section_id] ?? [] : []), ...claims] })); // one event per problem call
@@ -299,8 +301,12 @@ export default function App() {
 
   const resolved = (c: Conflict) => { const p = picks[c.conflict_id]; return !!p && (p.mode === "pick" ? !!p.span : !!p.text.trim()); };
 
+  /** The text stored for a resolution; same rule as core/load_graph.py::resolve (keep both in sync). */
+  const storedText = (c: Conflict, p: Pick) => p.mode === "pick" ? `${c.description}: ${c.quotes.find((q) => q.span_id === p.span)!.quote}` : p.text.trim();
+
   async function submitResolutions() {
     setResolveFail(null);
+    setStarting(true);
     const sid = session.current;
     const body = conflicts!.map((c) => { const p = picks[c.conflict_id];
       return p.mode === "pick" ? { conflict_id: c.conflict_id, chosen_span_id: p.span, clarification: null }
@@ -322,6 +328,8 @@ export default function App() {
       }
     } catch (e) {
       setResolveFail(String((e as Error).message));
+    } finally {
+      setStarting(false);
     }
   }
 
@@ -359,7 +367,28 @@ export default function App() {
           </li>
         ))}
       </ol>
-      {conflicts && (
+      {conflicts && reviewing && (
+        <section className="space-y-3">
+          <h2 className="text-lg font-semibold">Review resolutions</h2>
+          {conflicts.map((c) => {
+            const p = picks[c.conflict_id];
+            const q = p.mode === "pick" ? c.quotes.find((x) => x.span_id === p.span)! : null;
+            return (
+              <div key={c.conflict_id} className="space-y-1 rounded border p-2 text-sm">
+                <div><b>{c.conflict_id}</b> {c.description}</div>
+                <div>Chosen: {q ? `${q.marker} "${q.quote}"` : `Clarification: ${p.text.trim()}`}</div>
+                <div>Stored as: {storedText(c, p)}</div>
+              </div>
+            );
+          })}
+          {resolveFail && <div className="text-sm text-red-700">{resolveFail}</div>}
+          <div className="flex gap-2">
+            <Button color="light" disabled={starting} onClick={() => setReviewing(false)}>Edit</Button>
+            <Button disabled={starting} onClick={submitResolutions}>Start drafting</Button>
+          </div>
+        </section>
+      )}
+      {conflicts && !reviewing && (
         <section className="space-y-3">
           <h2 className="text-lg font-semibold">Resolve conflicts</h2>
           {conflicts.map((c) => {
@@ -389,8 +418,7 @@ export default function App() {
               </div>
             );
           })}
-          {resolveFail && <div className="text-sm text-red-700">{resolveFail}</div>}
-          <Button disabled={!conflicts.every(resolved)} onClick={submitResolutions}>Resolve and continue</Button>
+          <Button disabled={!conflicts.every(resolved)} onClick={() => { setResolveFail(null); setReviewing(true); }}>Review resolutions</Button>
         </section>
       )}
       {snap && (

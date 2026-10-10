@@ -1,8 +1,10 @@
 """Specification tests for ticket 07 (resolve conflicts before drafting), see issues/07-contract.md.
 
-Seams: core.load_graph.load_graph.stream (with a thread_id config), core.summarize.generate_draft,
-core.export.to_markdown, and the HTTP API (load + resolutions) through TestClient.
-The model is stubbed only at core.llm.parse and dispatches on schema (extraction / summary / conflict check).
+Seams: core.load_graph.load_graph.stream (with a thread_id config), core.export.to_markdown, and the HTTP API
+(load + resolutions) through TestClient.
+The model is stubbed only at core.llm.parse and dispatches on schema (extraction / per-section drafting / conflict check).
+Ticket 08 adaptation: drafting is one call per template section (tests/section_stub.py); the generate_draft unit tests
+moved to the API seam, and the cross-call retry for a resolution no section carries is gone.
 Resume is exercised through the API: the graph-level resume payload shape is the implementer's choice.
 """
 import json
@@ -19,7 +21,7 @@ from core.extract import ExtractionResult
 from core.ingest import ingest_dir
 from core.load_graph import load_graph
 from core.models import ClinicalEvent, Discrepancy, Draft, EvidenceRef, SummaryClaim
-from core.summarize import SummaryResult, generate_draft
+from tests.section_stub import IDS, collapse, kind, section_of, section_result
 from tests.test_api import ROOT, client, create, state  # noqa: F401  (client is a fixture)
 from tests.test_api_ticket04 import OPERATIONS, approve, asked, call  # noqa: F401  (asked is a fixture)
 from tests.test_ticket06_parallel_load import conflict_result
@@ -70,30 +72,32 @@ class Model:
         self.carry = True              # summary claims carry each resolution listed in the prompt
         self.summary_fail = False
         self.on_summary = lambda: None
+        self.extra = {}                # section_id -> extra claim dicts that section's call returns (ticket 08)
 
     def kind_calls(self, kind):
         return [m for k, m in self.calls if k == kind]
 
     def __call__(self, schema, messages, timeout):
-        kind = "extract" if schema is ExtractionResult else "summary" if schema is SummaryResult else "conflict"
+        k = kind(schema)
         with self.lock:
-            self.calls.append((kind, [dict(m) for m in messages]))
-        if kind == "extract":
+            self.calls.append((k, [dict(m) for m in messages]))
+        if k == "extract":
             docs = sorted({SPANS[s].document_id for s in re.findall(r"note_\d+_p\d+_b\d+", json.dumps(messages))})
             return ExtractionResult(events=[e for d in docs for e in events_for(d)])
-        if kind == "conflict":
+        if k == "conflict":
             return conflict_result(schema, self.conflicts)
         self.on_summary()
         if self.summary_fail:
             raise RuntimeError("summary boom")
-        claims = [SummaryClaim(claim_id="x", section="reason_for_admission", text="Admitted.",
-                               evidence_span_ids=[KEEP_SPAN], support_status="unverified")]
-        if self.carry:  # state each resolved fact as written, citing only its first span
+        sec = section_of(messages)  # ticket 08: one call per section
+        claims = [{"section": sec, **c} for c in self.extra.get(sec, [])]
+        if sec == "reason_for_admission":
+            claims.insert(0, {"section": sec, "text": "Admitted.", "evidence_span_ids": [KEEP_SPAN]})
+        if sec == "hospital_course" and self.carry:  # state each resolved fact as written, citing only its first span
             for rid, text, spans in RESOLVED_LINE.findall(text_of(messages)):
-                claims.append(SummaryClaim(claim_id="x", section="hospital_course", text=text,
-                                           evidence_span_ids=[re.findall(r"note_\d+_p\d+_b\d+", spans)[0]],
-                                           clinician_clarification_ids=[rid], support_status="unverified"))
-        return SummaryResult(claims=claims)
+                claims.append({"section": sec, "text": text, "evidence_span_ids": [re.findall(r"note_\d+_p\d+_b\d+", spans)[0]],
+                               "clinician_clarification_ids": [rid]})
+        return section_result(schema, bool(claims), claims)
 
 
 def text_of(messages):
@@ -170,7 +174,8 @@ def test_graph_without_conflicts_drafts_without_pausing(model):
     model.conflicts = []
     updates = graph_updates(str(uuid.uuid4()))
     assert not any("__interrupt__" in u for u in updates)
-    assert any("draft" in u for u in updates) and len(model.kind_calls("summary")) == 1
+    assert any("draft" in u for u in updates)
+    assert sorted(section_of(m) for m in model.kind_calls("summary")) == sorted(IDS)  # ticket 08: one call per section
 
 
 # ---------- load pauses ----------
@@ -205,11 +210,11 @@ def test_resume_drafts_resolved_fact_with_both_citations(client, model, how):
     text = f"{DESC}: {Q05[1]}" if how == "pick" else CLARIFICATION
     status, sse = submit(client, sid, [body])
     assert status == 200
-    assert [n for n, _ in sse] == ["draft", "done"], sse
+    assert collapse([n for n, _ in sse]) == ["sections", "draft", "done"], sse  # ticket 08: section events first
 
     s = state(client, sid)
     assert s["paused"] is False and s["load_running"] is False
-    assert s["draft"] == sse[0][1]["draft"]
+    assert s["draft"] == dict(sse)["draft"]["draft"] and dict(sse)["draft"]["warnings"] == []
     (res,) = s["resolutions"]
     assert res["conflict_id"] == "D01" and res["text"] == text and res["provenance"] == "clinician-provided"
     assert res["chosen_span_id"] == (Q05[0] if how == "pick" else None)
@@ -218,18 +223,21 @@ def test_resume_drafts_resolved_fact_with_both_citations(client, model, how):
     carried = [c for c in s["draft"]["claims"] if "D01" in c["clinician_clarification_ids"]]
     assert [c["text"] for c in carried] == [text]
     assert QUOTE_SPANS <= set(carried[0]["evidence_span_ids"]) and carried[0]["support_status"] == "needs_review"
-    assert all(c["support_status"] == "unverified" for c in s["draft"]["claims"] if c not in carried)
+    assert all(c["support_status"] == "unverified" and c["clinician_clarification_ids"] == []
+               for c in s["draft"]["claims"] if c not in carried)
     assert [(d["discrepancy_id"], set(d["source_span_ids"]), d["status"]) for d in s["draft"]["discrepancies"]] == [
         ("D01", QUOTE_SPANS, "clarified_pending_approval")]
 
-    (prompt,) = [text_of(m) for m in model.kind_calls("summary")]
-    assert [(rid, t, set(re.findall(r"note_\d+_p\d+_b\d+", sp))) for rid, t, sp in RESOLVED_LINE.findall(prompt)] == [
-        ("D01", text, QUOTE_SPANS)]
+    prompts = [text_of(m) for m in model.kind_calls("summary")]
+    assert sorted(section_of(m) for m in model.kind_calls("summary")) == sorted(IDS)  # one call each, no retry
     ids = {e["statement"]: e["event_id"] for e in s["events"]}
-    assert all(k in prompt for k in ids if k.startswith("KEEP"))
-    for statement, eid in ids.items():
-        if statement.startswith("DROP"):  # raw conflicting events never reach drafting
-            assert statement not in prompt and not re.search(rf"\b{eid}\b", prompt), statement
+    for prompt in prompts:  # ticket 08: every section call gets the same input: all resolutions, non-conflicting events
+        assert [(rid, t, set(re.findall(r"note_\d+_p\d+_b\d+", sp))) for rid, t, sp in RESOLVED_LINE.findall(prompt)] == [
+            ("D01", text, QUOTE_SPANS)]
+        assert all(k in prompt for k in ids if k.startswith("KEEP"))
+        for statement, eid in ids.items():
+            if statement.startswith("DROP"):  # raw conflicting events never reach drafting
+                assert statement not in prompt and not re.search(rf"\b{eid}\b", prompt), statement
 
 
 def test_drafting_failure_after_resume_streams_error_and_clears_flags(client, model):
@@ -257,7 +265,7 @@ def test_no_conflicts_streams_straight_to_done(client, model):
     model.conflicts = []
     sid = create(client)
     names = [n for n, _ in load(client, sid)]
-    assert "conflicts_found" not in names and names[-3:] == ["extraction_done", "draft", "done"]
+    assert "conflicts_found" not in names and collapse(names)[-4:] == ["extraction_done", "sections", "draft", "done"]
     s = state(client, sid)
     assert s["paused"] is False and s["conflicts"] == [] and s["resolutions"] == []
 
@@ -302,7 +310,7 @@ def test_resolutions_409_on_concurrent_submit(client, model):
         release.set()
         t.join(WAIT)
     assert first[0][0] == 200 and first[0][1][-1][0] == "done"
-    assert len(model.kind_calls("summary")) == 1
+    assert len(model.kind_calls("summary")) == len(IDS)  # ticket 08: one call per section, drafted once
 
 
 INVALID = {
@@ -347,66 +355,39 @@ def test_new_load_discards_a_pause(client, model):
     assert submit(client, sid, [clarify()]) == (409, {"detail": "not paused"})
 
 
-# ---------- drafting (core.summarize) ----------
+# ---------- drafting (ticket 08: per-section calls, through the API) ----------
 
-def summary_stub(monkeypatch, *outputs):
-    """Each summary call returns the next claims list (the last one repeats); records messages."""
-    calls = []
+def test_resolution_carried_by_no_section_is_appended_with_a_warning_and_no_extra_call(client, model):
+    model.carry = False  # no section carries D01; hospital_course cites an unknown clarification ID instead
+    model.extra = {"hospital_course": [{"text": "Course.", "evidence_span_ids": [KEEP_SPAN],
+                                        "clinician_clarification_ids": ["D99"]}]}
+    sid = paused(client, model)
+    status, sse = submit(client, sid, [clarify()])
+    assert status == 200 and sse[-1][0] == "done", sse
 
-    def parse(schema, messages, timeout):
-        assert schema is SummaryResult
-        calls.append([dict(m) for m in messages])
-        claims = outputs[min(len(calls), len(outputs)) - 1]
-        return SummaryResult(claims=[SummaryClaim(claim_id="x", support_status="unverified", **c) for c in claims])
-    monkeypatch.setattr(llm, "parse", parse)
-    return calls
-
-
-EVENTS = [ev("Admitted with pneumonia.", (KEEP_SPAN, SPANS[KEEP_SPAN].text)).model_copy(update={"event_id": "E01"})]
-ADMITTED = {"section": "reason_for_admission", "text": "Admitted.", "evidence_span_ids": [KEEP_SPAN]}
-
-
-def test_draft_claim_carrying_a_resolution_gets_all_quote_spans_and_needs_review(monkeypatch):
-    calls = summary_stub(monkeypatch, [ADMITTED, {"section": "hospital_course", "text": CLARIFICATION,
-                                                  "evidence_span_ids": [Q04[0]], "clinician_clarification_ids": ["D01"]}])
-    draft, warnings = generate_draft(EVENTS, SPANS, [resolution()])
-    assert len(calls) == 1 and warnings == []
-    (prompt,) = [text_of(m) for m in calls]
-    assert [(rid, t, set(re.findall(r"note_\d+_p\d+_b\d+", sp))) for rid, t, sp in RESOLVED_LINE.findall(prompt)] == [
-        ("D01", CLARIFICATION, QUOTE_SPANS)]
-    admitted, resolved = draft.claims
-    assert admitted.support_status == "unverified" and admitted.clinician_clarification_ids == []
-    assert resolved.clinician_clarification_ids == ["D01"] and resolved.support_status == "needs_review"
-    assert set(resolved.evidence_span_ids) == QUOTE_SPANS
-    assert draft.discrepancies == []  # the graph sets discrepancies
-
-
-def test_draft_missing_a_resolution_is_retried_then_appended_with_a_warning(monkeypatch):
-    unknown = {"section": "hospital_course", "text": "Course.", "evidence_span_ids": [KEEP_SPAN],
-               "clinician_clarification_ids": ["D99"]}
-    calls = summary_stub(monkeypatch, [ADMITTED, unknown])  # never carries D01
-    draft, warnings = generate_draft(EVENTS, SPANS, [resolution()])
-
-    assert len(calls) == 2  # one validation retry
-    first, second = calls
+    calls = [(section_of(m), m) for m in model.kind_calls("summary")]
+    first, second = [m for sec, m in calls if sec == "hospital_course"]  # D99: one per-section validation retry
     assert second[:len(first)] == first
-    fed_back = text_of([m for m in second[len(first):] if m["role"] != "assistant"])
-    assert "D01" in fed_back and "D99" in fed_back
+    assert "D99" in text_of([m for m in second[len(first):] if m["role"] != "assistant"])
+    assert sorted(sec for sec, _ in calls if sec != "hospital_course") == sorted(set(IDS) - {"hospital_course"})
 
-    c1, c2, c3 = draft.claims
-    assert (c1.claim_id, c2.claim_id, c3.claim_id) == ("C01", "C02", "C03")
-    assert c2.clinician_clarification_ids == [] and c2.support_status == "unverified"  # unknown ID removed
-    assert (c3.section, c3.text, c3.clinician_clarification_ids, c3.support_status) == (
+    claims = state(client, sid)["draft"]["claims"]
+    assert sorted(c["claim_id"] for c in claims) == [f"C{i:02d}" for i in range(1, len(claims) + 1)]
+    (course,) = [c for c in claims if c["text"] == "Course."]
+    assert course["clinician_clarification_ids"] == [] and course["support_status"] == "unverified"  # unknown ID removed
+    (fallback,) = [c for c in claims if "D01" in c["clinician_clarification_ids"]]
+    assert (fallback["section"], fallback["text"], fallback["clinician_clarification_ids"], fallback["support_status"]) == (
         "hospital_course", CLARIFICATION, ["D01"], "needs_review")
-    assert set(c3.evidence_span_ids) == QUOTE_SPANS
-    assert any("D01" in w for w in warnings)
+    assert set(fallback["evidence_span_ids"]) == QUOTE_SPANS
+    assert any("D01" in w for w in dict(sse)["draft"]["warnings"])
 
 
-def test_draft_no_longer_flags_needs_review_events(monkeypatch):
-    flagged = EVENTS[0].model_copy(update={"needs_review": True})
-    summary_stub(monkeypatch, [ADMITTED])
-    draft, _ = generate_draft([flagged], SPANS)
-    assert [c.support_status for c in draft.claims] == ["unverified"] and draft.discrepancies == []
+def test_draft_does_not_flag_claims_without_a_resolution(client, model):
+    model.conflicts = []
+    sid = create(client)
+    assert load(client, sid)[-1][0] == "done"
+    draft = state(client, sid)["draft"]
+    assert [c["support_status"] for c in draft["claims"]] == ["unverified"] and draft["discrepancies"] == []
 
 
 # ---------- export (core.export) ----------

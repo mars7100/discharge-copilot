@@ -13,8 +13,8 @@ from core import llm
 from core.export import marker
 from core.extract import ExtractionResult
 from core.ingest import ingest_dir
-from core.models import ClinicalEvent, EvidenceRef, SummaryClaim
-from core.summarize import SummaryResult
+from core.models import ClinicalEvent, EvidenceRef
+from tests.section_stub import IDS, collapse, kind, section_of, section_result
 
 ROOT = Path(__file__).parent.parent
 SPAN_LINE = re.compile(r"^\[(\S+)\] (.+)$", re.M)  # "[span_id] text" lines of the extraction prompt
@@ -28,11 +28,12 @@ def fake_parse(schema, messages, timeout):
         return ExtractionResult(events=[ClinicalEvent(
             event_id="x", date_or_hospital_day="Hospital Day 1", category="presentation", statement=text,
             evidence=[EvidenceRef(span_id=sid, quote=text)])])
-    if schema is not SummaryResult:  # conflict check (ticket 06; schema is the implementer's): no conflicts
+    if kind(schema) == "conflict":  # conflict check (ticket 06; schema is the implementer's): no conflicts
         return schema.model_validate({n: [] for n, f in schema.model_fields.items() if f.is_required()})
+    if section_of(messages) != "reason_for_admission":  # ticket 08: one call per section; only this one documented
+        return section_result(schema, False)
     sid = re.search(r"spans: (\w+)", user).group(1)
-    return SummaryResult(claims=[SummaryClaim(claim_id="x", section="reason_for_admission", text="Admitted.",
-                                              evidence_span_ids=[sid], support_status="unverified")])
+    return section_result(schema, True, [{"section": "reason_for_admission", "text": "Admitted.", "evidence_span_ids": [sid]}])
 
 
 @pytest.fixture
@@ -89,7 +90,7 @@ def names(events):
     out = [n for n, _ in events if n not in ("note_extracted", "note_failed")]
     per_note = [n for n, _ in events if n in ("note_extracted", "note_failed")]
     assert [n for n, _ in events][:len(per_note)] == per_note, "per-note events must come first"
-    return (["per_note"] if len(per_note) == NOTES else per_note) + out
+    return (["per_note"] if len(per_note) == NOTES else per_note) + collapse(out)  # ticket 08: section events -> "sections"
 
 
 def state(client, sid):
@@ -127,12 +128,14 @@ def test_load_streams_extraction_draft_done_and_fills_state(client, calls):
     thread_id = state(client, sid)["chat_thread_id"]
     events = load(client, sid)
 
-    assert names(events) == ["per_note", "extraction_done", "draft", "done"]
-    (_, extracted), (_, drafted), (_, done) = events[NOTES:]
+    assert names(events) == ["per_note", "extraction_done", "sections", "draft", "done"]
+    (_, extracted), (_, drafted), (_, done) = events[NOTES], events[-2], events[-1]  # section events between (ticket 08)
     assert extracted == {"event_count": NOTES, "warnings": [], "conflict_count": 0}
     assert drafted["warnings"] == [] and done == {}
     # every model call went through core.llm.parse: one extraction per note, one conflict check, then the draft
-    assert calls.count(ExtractionResult) == NOTES and calls[-1] is SummaryResult and len(calls) == NOTES + 2
+    # ticket 08: then one draft call per template section
+    assert calls.count(ExtractionResult) == NOTES and len(calls) == NOTES + 1 + len(IDS)
+    assert all(kind(c) == "summary" for c in calls[-len(IDS):])
 
     docs, spans, _ = ingest_dir(ROOT / "fixtures" / "case_001")
     s = state(client, sid)
@@ -163,7 +166,7 @@ def test_load_running_true_during_load(client, calls):
 def test_error_streams_one_error_event_and_session_is_reusable(client, calls):
     sid = create(client)
     thread_id = state(client, sid)["chat_thread_id"]
-    assert names(load(client, sid)) == ["per_note", "extraction_done", "draft", "done"]
+    assert names(load(client, sid)) == ["per_note", "extraction_done", "sections", "draft", "done"]
 
     calls.fail = ExtractionResult  # every note fails; the conflict check succeeds
     events = load(client, sid)
@@ -175,14 +178,14 @@ def test_error_streams_one_error_event_and_session_is_reusable(client, calls):
     assert s["session_id"] == sid and s["chat_thread_id"] == thread_id
 
     calls.fail = False
-    assert names(load(client, sid)) == ["per_note", "extraction_done", "draft", "done"]
+    assert names(load(client, sid)) == ["per_note", "extraction_done", "sections", "draft", "done"]
     s = state(client, sid)
     assert len(s["events"]) == NOTES and s["draft"] is not None and s["chat_thread_id"] == thread_id
 
 
 def test_error_in_draft_step_streams_error_without_done(client, calls):
     sid = create(client)
-    calls.during = lambda: setattr(calls, "fail", calls[-1] is SummaryResult)
+    calls.during = lambda: setattr(calls, "fail", kind(calls[-1]) == "summary")
     events = load(client, sid)
     assert names(events) == ["per_note", "extraction_done", "error"]
     assert events[-1][1]["detail"].startswith("SummaryError: ")
@@ -230,7 +233,7 @@ def test_case_001_live_load(client):
     sid = create(client)
     events = load(client, sid)
     # ticket 07: case_001 pauses on its conflict; the replayed run includes the resume stream after conflicts_found
-    assert names(events) == ["per_note", "extraction_done", "conflicts_found", "draft", "done"], events
+    assert names(events) == ["per_note", "extraction_done", "conflicts_found", "sections", "draft", "done"], events
     s = state(client, sid)
     assert len(s["events"]) >= 3 and s["draft"]["claims"]
     assert all(c in s["passages"] for claim in s["draft"]["claims"] for c in claim["evidence_span_ids"])

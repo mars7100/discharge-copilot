@@ -2,7 +2,8 @@
 
 Seams: core.load_graph.load_graph.stream, core.extract.extract_events, the HTTP API through TestClient.
 The model is stubbed only at core.llm.parse and dispatches on schema: ExtractionResult -> per-note extraction,
-SummaryResult -> drafting, any other schema -> the conflict check. The conflict check's result schema is the
+a schema with a `documented` field -> per-section drafting (ticket 08, see tests/section_stub.py), any other schema ->
+the conflict check. The conflict check's result schema is the
 implementer's choice; the stub fills whichever of its fields is annotated list[ConflictItem].
 """
 import json
@@ -18,8 +19,8 @@ from core import llm
 from core.extract import ExtractionResult, extract_events
 from core.ingest import ingest_dir
 from core.load_graph import load_graph
-from core.models import ClinicalEvent, Document, Draft, SourceSpan, SummaryClaim
-from core.summarize import SummaryResult
+from core.models import ClinicalEvent, Document, Draft, SourceSpan
+from tests.section_stub import IDS, collapse, kind, section_of, section_result
 
 ROOT = Path(__file__).parent.parent
 SPAN_ID = re.compile(r"note_\d+_p\d+_b\d+")
@@ -74,19 +75,21 @@ class Model:
     def __call__(self, schema, messages, timeout):
         seen = set(SPAN_ID.findall(json.dumps(messages))) & self.spans.keys()
         docs = sorted({self.spans[s].document_id for s in seen})
-        kind = "extract" if schema is ExtractionResult else "summary" if schema is SummaryResult else "conflict"
+        k = kind(schema)
         with self.lock:
-            self.calls.append((kind, docs, seen, list(messages)))
-            attempt = len(self.kind_calls(kind))
-        if kind == "extract":
+            self.calls.append((k, docs, seen, list(messages)))
+            attempt = len(self.kind_calls(k))
+        if k == "extract":
             for d in docs:
                 self.on_extract(d)
             if self.fail & set(docs):
                 raise RuntimeError("extraction boom")
             return ExtractionResult(events=[e for d in docs for e in note_events(self.passages(d))])
-        if kind == "summary":
-            return SummaryResult(claims=[SummaryClaim(claim_id="x", section="reason_for_admission", text="Admitted.",
-                                                      evidence_span_ids=[self.claim_span], support_status="unverified")])
+        if k == "summary":  # ticket 08: one call per section; only reason_for_admission is documented
+            if section_of(messages) != "reason_for_admission":
+                return section_result(schema, False)
+            return section_result(schema, True, [{"section": "reason_for_admission", "text": "Admitted.",
+                                                  "evidence_span_ids": [self.claim_span]}])
         self.on_conflict()
         if "conflict" in self.fail:
             raise RuntimeError("conflict boom")
@@ -304,7 +307,9 @@ def test_conflicts_become_discrepancies_and_sse_reports_each_note(client, model,
             {"conflict_id": c, "chosen_span_id": None, "clarification": "Clarified."} for c in ("D01", "D02")]}) as r:
         assert r.status_code == 200
         resumed = [block.split("\n")[0] for block in "".join(r.iter_text()).strip().split("\n\n")]
-    assert resumed == ["event: draft", "event: done"]
+    # ticket 08: one section event per template section, then draft, done
+    assert len(resumed) == len(IDS) + 2 and resumed[-2:] == ["event: draft", "event: done"]
+    assert all(r in ("event: section_drafted", "event: section_omitted") for r in resumed[:-2])
     s = state(client, sid)
     assert [(d["discrepancy_id"], d["description"], sorted(d["source_span_ids"]), d["status"])
             for d in s["draft"]["discrepancies"]] == [
@@ -344,7 +349,7 @@ def test_one_note_failing_does_not_fail_the_load(client, model, case):
     sse = load(client, sid)
 
     names = [n for n, _ in sse]
-    assert names[len(ids):] == ["extraction_done", "draft", "done"]
+    assert collapse(names[len(ids):]) == ["extraction_done", "sections", "draft", "done"]  # ticket 08: section events
     per_note = {d["document_id"]: (n, d) for n, d in sse[:len(ids)]}
     assert sorted(per_note) == sorted(ids)
     name, failed = per_note.pop("note_03")

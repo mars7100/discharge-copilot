@@ -11,6 +11,7 @@ from core.ingest import ingest_dir
 from langgraph.types import Command
 
 from core.load_graph import load_graph
+from core.models import TEMPLATE
 from core.export import marker
 
 FIXTURES = Path(__file__).parent.parent / "fixtures"
@@ -79,6 +80,13 @@ def drive(sid: str, events: queue.Queue, graph_input) -> None:
             return
         elif "resolve" in u:
             sessions.update(sid, resolutions=u["resolve"]["resolutions"])
+        elif "draft_section" in u:
+            r = u["draft_section"]["sections"][0]
+            if not r["documented"] and next(t for t in TEMPLATE if t["section_id"] == r["section_id"])["optional"]:
+                events.put(("section_omitted", {"section_id": r["section_id"]}))
+            else:
+                events.put(("section_drafted", {"section_id": r["section_id"], "warnings": r["warnings"],
+                                                "claims": [c.model_dump(include={"section", "text", "evidence_span_ids"}) for c in r["claims"]]}))
         elif "draft" in u:
             sessions.update(sid, draft=u["draft"]["draft"])
             events.put(("draft", {"draft": u["draft"]["draft"].model_dump(mode="json"),

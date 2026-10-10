@@ -1,4 +1,4 @@
-"""Load pipeline as a LangGraph graph: [extract_note x N, conflict_check] -> merge -> resolve -> draft (spec: Load graph)."""
+"""Load pipeline as a LangGraph graph: [extract_note x N, conflict_check] -> merge -> resolve -> [draft_section x N] -> draft (spec: Load graph)."""
 import operator
 from typing import Annotated, TypedDict
 
@@ -24,6 +24,7 @@ class LoadState(TypedDict, total=False):
     extract_warnings: list[str]
     discrepancies: list[Discrepancy]
     resolutions: list[Resolution]
+    sections: Annotated[list[dict], operator.add]  # one record per template section, in completion order
     draft: Draft
     draft_warnings: list[str]
 
@@ -90,9 +91,20 @@ def overlaps(e: ClinicalEvent, conflicts: list[ConflictItem]) -> bool:
                for r in e.evidence for c in conflicts for q in c.quotes)
 
 
-def draft(state: LoadState) -> dict:
+def fan_out_sections(state: LoadState) -> list:
     events = [e for e in state["events"] if not overlaps(e, state["conflicts"])]  # drafting never sees raw conflicting events
-    d, warnings = core.summarize.generate_draft(events, state["spans"], state["resolutions"])
+    return [Send("draft_section", {"section_id": t["section_id"], "events": events, "spans": state["spans"],
+                                   "resolutions": state["resolutions"]}) for t in core.models.TEMPLATE]
+
+
+def draft_section(state: dict) -> dict:
+    rec = core.summarize.draft_section(state["section_id"], state["events"], state["spans"], state["resolutions"])
+    return {"sections": [{"section_id": state["section_id"], **rec}]}
+
+
+def draft(state: LoadState) -> dict:
+    """Join: template order, never completion order."""
+    d, warnings = core.summarize.assemble(state["sections"], state["resolutions"])
     return {"draft": d.model_copy(update={"discrepancies": state["discrepancies"]}), "draft_warnings": warnings}
 
 
@@ -102,11 +114,13 @@ def build():
     g.add_node("conflict_check", conflict_check)
     g.add_node("merge", merge)
     g.add_node("resolve", resolve)
+    g.add_node("draft_section", draft_section)
     g.add_node("draft", draft)
     g.add_conditional_edges(START, fan_out, ["extract_note", "conflict_check"])
     g.add_edge(["extract_note", "conflict_check"], "merge")
     g.add_edge("merge", "resolve")
-    g.add_edge("resolve", "draft")
+    g.add_conditional_edges("resolve", fan_out_sections, ["draft_section"])
+    g.add_edge("draft_section", "draft")
     g.add_edge("draft", END)
     types = [("core.models", n) for n in vars(core.models) if getattr(getattr(core.models, n), "__module__", None) == "core.models"]  # state types restored from memory
     # ponytail: in-process memory, lost on restart

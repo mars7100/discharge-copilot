@@ -22,6 +22,7 @@ interface Conflict { conflict_id: string; description: string; quotes: ConflictQ
 interface Resolution { conflict_id: string; text: string }
 interface Pick { mode: "pick" | "clarify"; span: string; text: string }
 interface Turn { q: string; a?: string; cited: string[]; failed?: string }
+interface EarlyClaim { text: string; evidence_span_ids: string[] }
 interface Entry { name: string; seconds: string; details: string[] }
 
 const WARNING = "SYNTHETIC DEMONSTRATION — NOT FOR CLINICAL USE";
@@ -42,6 +43,8 @@ function describe(name: string, d: any): string[] {
   if (name === "note_failed") return [`${d.document_id}: failed — ${d.detail}`];
   if (name === "extraction_done") return [`${d.event_count} events`, ...warnings];
   if (name === "draft") return [`${d.draft?.claims?.length ?? 0} claims`, ...warnings];
+  if (name === "section_drafted") return [`${d.section_id}: ${d.claims?.length ?? 0} claims`, ...warnings];
+  if (name === "section_omitted") return [d.section_id];
   if (name === "error") return [String(d.detail)];
   return [];
 }
@@ -166,6 +169,9 @@ export default function App() {
   const [conflicts, setConflicts] = useState<Conflict[] | null>(null); // non-null while the load waits for resolutions
   const [picks, setPicks] = useState<Record<string, Pick>>({});
   const [resolveFail, setResolveFail] = useState<string | null>(null);
+  const [early, setEarly] = useState<Record<string, EarlyClaim[]>>({}); // streamed sections, shown until the final draft
+  const [earlyPassages, setEarlyPassages] = useState<Record<string, Passage>>({});
+  const earlyFetched = useRef(false);
   const session = useRef("");
   const templateFetch = useRef<Promise<Section[]> | null>(null);
 
@@ -243,6 +249,16 @@ export default function App() {
         if (f.name === "error") setError(String(d.detail));
         if (f.name === "done") setReady(true);
         if (f.name === "conflicts_found") { setConflicts(d.conflicts); setPicks({}); setResolveFail(null); }
+        if (f.name === "section_drafted") {
+          setEarly((e) => ({ ...e, [d.section_id]: d.claims }));
+          if (!earlyFetched.current) {
+            earlyFetched.current = true;
+            templateFetch.current ??= api<{ sections: Section[] }>("/api/template").then((t) => t.sections);
+            Promise.all([api<Snap>(`/api/sessions/${sid}`), templateFetch.current])
+              .then(([s, sections]) => { setEarlyPassages(s.passages); setTemplate(sections); })
+              .catch((e) => setError(String(e.message)));
+          }
+        }
         if (f.name === "draft") showDraft(sid).catch((e) => setError(String(e.message)));
       }
     }
@@ -253,6 +269,8 @@ export default function App() {
     setError(null);
     setEntries([]);
     setSnap(null);
+    setEarly({});
+    earlyFetched.current = false;
     setReady(false);
     setTurns([]);
     setFail(null);
@@ -396,6 +414,17 @@ export default function App() {
           </section>
         );
       })}
+      {!snap && template.map((sec) => early[sec.section_id] && (
+        <section key={sec.section_id}>
+          <h2 className="text-lg font-semibold">{sec.title}</h2>
+          {early[sec.section_id].length ? early[sec.section_id].map((c, i) => (
+            <div key={i}>
+              <span>{c.text}</span>
+              {c.evidence_span_ids.map((id) => earlyPassages[id] && <Marker key={id} p={earlyPassages[id]} />)}
+            </div>
+          )) : <div className="italic">Not documented in the supplied notes.</div>}
+        </section>
+      ))}
       {snap && review(snap)}
     </main>
   );

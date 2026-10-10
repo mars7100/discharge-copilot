@@ -37,15 +37,17 @@ def check_claims(claims: list[SummaryClaim], spans: dict[str, SourceSpan]) -> tu
 
 
 def draft_section(section_id: str, events: list[ClinicalEvent], spans: dict[str, SourceSpan],
-                  resolutions: list[Resolution] = ()) -> dict:
-    """One section's {documented, claims (placeholder IDs), warnings}. Retries once on errors or exceptions."""
+                  resolutions: list[Resolution] = (), problem: str | None = None) -> dict:
+    """One section's (hospital_course: one problem's) {documented, claims (placeholder IDs), warnings}. Retries once on errors or exceptions."""
     purpose = next(s["purpose"] for s in TEMPLATE if s["section_id"] == section_id)
     lines = [f"{e.event_id} | {e.date_or_hospital_day} | {e.category} | {e.statement} | "
              f"spans: {', '.join(r.span_id for r in e.evidence)}" for e in events]
     lines += [f"{r.conflict_id} | RESOLVED (clinician-provided) | {r.text} | spans: {', '.join(q.span_id for q in r.quotes)}"
               for r in resolutions]
+    scope = (f"Problem: {problem}\nClaims cover only this problem and only events that changed the course of the stay, in chronological order.\n"
+             if problem else "")
     messages = [{"role": "system", "content": SYSTEM},
-                {"role": "user", "content": f"Section: {section_id} ({purpose}). Every claim's section is {section_id}.\n"
+                {"role": "user", "content": f"Section: {section_id} ({purpose}). Every claim's section is {section_id}.\n{scope}"
                                             "Events:\n" + "\n".join(lines)}]
     known = {r.conflict_id for r in resolutions}
     result, claims, errors = None, [], []
@@ -63,8 +65,8 @@ def draft_section(section_id: str, events: list[ClinicalEvent], spans: dict[str,
         claims = [c for c in claims if c.section == section_id]
         errors += [f"{c.claim_id}: unknown clinician_clarification_id {i}, removed" for c in claims
                    for i in c.clinician_clarification_ids if i not in known]
-        claims = [c.model_copy(update={"clinician_clarification_ids": [i for i in c.clinician_clarification_ids if i in known]})
-                  for c in claims]
+        claims = [c.model_copy(update={"clinician_clarification_ids": [i for i in c.clinician_clarification_ids if i in known],
+                                       "problem": problem}) for c in claims]
         if not errors:
             break
         if not attempt:
@@ -78,17 +80,20 @@ def draft_section(section_id: str, events: list[ClinicalEvent], spans: dict[str,
     return {"documented": True, "claims": claims, "warnings": warnings}
 
 
-def assemble(recs: list[dict], resolutions: list[Resolution]) -> tuple[Draft, list[str]]:
-    """Joins section records in template order: numbers claims, adds resolution quotes, states uncarried resolutions."""
-    by_section = {r["section_id"]: r for r in recs}
-    recs = [by_section[s["section_id"]] for s in TEMPLATE if s["section_id"] in by_section]
-    claims = {r["section_id"]: list(r["claims"]) for r in recs}
-    warnings = [w for r in recs for w in r["warnings"]]
+def assemble(recs: list[dict], resolutions: list[Resolution], problems: list[str],
+             conflict_problem: dict[str, str]) -> tuple[Draft, list[str]]:
+    """Joins section records in template order (hospital_course: problem order): numbers claims, adds resolution quotes,
+    states uncarried resolutions in their problem's group."""
+    by_key = {(r["section_id"], r["problem"]): r for r in recs}
+    keys = [(s["section_id"], p) for s in TEMPLATE for p in (problems if s["section_id"] == "hospital_course" else [None])
+            if (s["section_id"], p) in by_key]
+    claims = {k: list(by_key[k]["claims"]) for k in keys}
+    warnings = [w for k in keys for w in by_key[k]["warnings"]]
     for r in resolutions:
         if not any(r.conflict_id in c.clinician_clarification_ids for cs in claims.values() for c in cs):
             warnings.append(f"{r.conflict_id}: resolution not carried by any claim, added to hospital_course")
-            claims["hospital_course"].append(SummaryClaim(
-                claim_id="x", section="hospital_course", text=r.text, support_status="needs_review",
+            claims[("hospital_course", conflict_problem[r.conflict_id])].append(SummaryClaim(
+                claim_id="x", section="hospital_course", text=r.text, support_status="needs_review", problem=conflict_problem[r.conflict_id],
                 evidence_span_ids=list(dict.fromkeys(q.span_id for q in r.quotes)), clinician_clarification_ids=[r.conflict_id]))
     by_id = {r.conflict_id: r for r in resolutions}
     out = []

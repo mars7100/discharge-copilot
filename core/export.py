@@ -22,7 +22,10 @@ def to_markdown(draft: Draft, spans: dict[str, SourceSpan], documents: list[Docu
         if not claims and section["optional"]:
             continue
         out += [f"## {section['title']}", ""]
-        for c in claims:
+        claims.sort(key=lambda c: c.problem is not None)  # corrections without a problem go first, no subheading
+        for i, c in enumerate(claims):
+            if c.problem and (i == 0 or c.problem != claims[i - 1].problem):
+                out.append(f"### {c.problem}")
             flag = " **(needs review)**" if c.support_status == "needs_review" else ""
             clar = " *(clinician-provided)*" if c.clinician_clarification_ids else ""
             out.append(f"- {c.text}{flag}{clar} " + " ".join(marker(spans[s]) for s in c.evidence_span_ids))

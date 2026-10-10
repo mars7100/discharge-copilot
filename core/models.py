@@ -70,6 +70,7 @@ class SummaryClaim(BaseModel):
     evidence_span_ids: list[str]
     clinician_clarification_ids: list[str] = []
     support_status: Literal["unverified", "supported", "needs_review"]
+    problem: str | None = None  # set by code on hospital_course claims
 
 
 class Discrepancy(BaseModel):

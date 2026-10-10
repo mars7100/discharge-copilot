@@ -12,7 +12,7 @@ import pytest
 from core import llm
 from core.export import NOT_DOCUMENTED
 from core.extract import ExtractionResult
-from tests.section_stub import IDS, OPTIONAL, SECTION_EVENTS, kind, section_of, section_result
+from tests.section_stub import IDS, OPTIONAL, SECTION_EVENTS, kind, normalization, section_of, section_result
 from tests.test_api import client, create, state  # noqa: F401  (client is a fixture)
 from tests.test_api_ticket04 import approve
 from tests.test_ticket06_parallel_load import conflict_result
@@ -45,6 +45,8 @@ class Model:
             return ExtractionResult(events=[e for d in docs for e in events_for(d)])
         if k == "conflict":
             return conflict_result(schema, self.conflicts)
+        if k == "normalize":  # ticket 09: maps nothing; code puts unlabeled events and conflicts under one problem
+            return normalization(schema)
         sec = section_of(messages)
         with self.lock:
             self.calls.append((sec, [dict(m) for m in messages]))

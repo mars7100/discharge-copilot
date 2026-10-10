@@ -14,7 +14,7 @@ from core.export import marker
 from core.extract import ExtractionResult
 from core.ingest import ingest_dir
 from core.models import ClinicalEvent, EvidenceRef
-from tests.section_stub import IDS, collapse, kind, section_of, section_result
+from tests.section_stub import IDS, collapse, kind, normalization, section_of, section_result
 
 ROOT = Path(__file__).parent.parent
 SPAN_LINE = re.compile(r"^\[(\S+)\] (.+)$", re.M)  # "[span_id] text" lines of the extraction prompt
@@ -27,7 +27,9 @@ def fake_parse(schema, messages, timeout):
         sid, text = SPAN_LINE.findall(user)[1]
         return ExtractionResult(events=[ClinicalEvent(
             event_id="x", date_or_hospital_day="Hospital Day 1", category="presentation", statement=text,
-            evidence=[EvidenceRef(span_id=sid, quote=text)])])
+            evidence=[EvidenceRef(span_id=sid, quote=text)], problem="Pneumonia")])
+    if kind(schema) == "normalize":  # ticket 09: the one label maps onto itself
+        return normalization(schema, [("Pneumonia", ["Pneumonia"], [])])
     if kind(schema) == "conflict":  # conflict check (ticket 06; schema is the implementer's): no conflicts
         return schema.model_validate({n: [] for n, f in schema.model_fields.items() if f.is_required()})
     if section_of(messages) != "reason_for_admission":  # ticket 08: one call per section; only this one documented
@@ -133,8 +135,10 @@ def test_load_streams_extraction_draft_done_and_fills_state(client, calls):
     assert extracted == {"event_count": NOTES, "warnings": [], "conflict_count": 0}
     assert drafted["warnings"] == [] and done == {}
     # every model call went through core.llm.parse: one extraction per note, one conflict check, then the draft
-    # ticket 08: then one draft call per template section
-    assert calls.count(ExtractionResult) == NOTES and len(calls) == NOTES + 1 + len(IDS)
+    # ticket 08: then one draft call per template section; ticket 09: plus one normalization call, before drafting
+    # (every event has the one problem, so hospital_course is one call)
+    assert calls.count(ExtractionResult) == NOTES and len(calls) == NOTES + 2 + len(IDS)
+    assert [kind(c) for c in calls].count("normalize") == 1
     assert all(kind(c) == "summary" for c in calls[-len(IDS):])
 
     docs, spans, _ = ingest_dir(ROOT / "fixtures" / "case_001")

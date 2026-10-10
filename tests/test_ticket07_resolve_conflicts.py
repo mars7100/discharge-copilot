@@ -21,7 +21,7 @@ from core.extract import ExtractionResult
 from core.ingest import ingest_dir
 from core.load_graph import load_graph
 from core.models import ClinicalEvent, Discrepancy, Draft, EvidenceRef, SummaryClaim
-from tests.section_stub import IDS, collapse, kind, section_of, section_result
+from tests.section_stub import IDS, collapse, kind, normalization, section_of, section_result
 from tests.test_api import ROOT, client, create, state  # noqa: F401  (client is a fixture)
 from tests.test_api_ticket04 import OPERATIONS, approve, asked, call  # noqa: F401  (asked is a fixture)
 from tests.test_ticket06_parallel_load import conflict_result
@@ -86,6 +86,8 @@ class Model:
             return ExtractionResult(events=[e for d in docs for e in events_for(d)])
         if k == "conflict":
             return conflict_result(schema, self.conflicts)
+        if k == "normalize":  # ticket 09: maps nothing; code puts unlabeled events and conflicts under one problem
+            return normalization(schema)
         self.on_summary()
         if self.summary_fail:
             raise RuntimeError("summary boom")

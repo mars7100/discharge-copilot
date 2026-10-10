@@ -20,7 +20,7 @@ from core.extract import ExtractionResult, extract_events
 from core.ingest import ingest_dir
 from core.load_graph import load_graph
 from core.models import ClinicalEvent, Document, Draft, SourceSpan
-from tests.section_stub import IDS, collapse, kind, section_of, section_result
+from tests.section_stub import IDS, collapse, kind, normalization, section_of, section_result
 
 ROOT = Path(__file__).parent.parent
 SPAN_ID = re.compile(r"note_\d+_p\d+_b\d+")
@@ -90,6 +90,8 @@ class Model:
                 return section_result(schema, False)
             return section_result(schema, True, [{"section": "reason_for_admission", "text": "Admitted.",
                                                   "evidence_span_ids": [self.claim_span]}])
+        if k == "normalize":  # ticket 09: the one label and every conflict map onto one problem
+            return normalization(schema, [(PROBLEM, [PROBLEM], re.findall(r"\bD\d\d\b", "\n".join(str(m["content"]) for m in messages)))])
         self.on_conflict()
         if "conflict" in self.fail:
             raise RuntimeError("conflict boom")

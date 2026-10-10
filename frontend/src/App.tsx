@@ -5,7 +5,7 @@ import { SseDecoder } from "./sse";
 interface Passage { text: string; filename: string; page: number; marker: string }
 interface Claim {
   claim_id: string; section: string; text: string; evidence_span_ids: string[]
-  support_status: string; clinician_clarification_ids: string[]
+  support_status: string; clinician_clarification_ids: string[]; problem?: string | null
 }
 interface Section { section_id: string; title: string; optional: boolean }
 interface Discrepancy { discrepancy_id: string; description: string; source_span_ids: string[]; status: string }
@@ -22,7 +22,7 @@ interface Conflict { conflict_id: string; description: string; quotes: ConflictQ
 interface Resolution { conflict_id: string; text: string }
 interface Pick { mode: "pick" | "clarify"; span: string; text: string }
 interface Turn { q: string; a?: string; cited: string[]; failed?: string }
-interface EarlyClaim { text: string; evidence_span_ids: string[] }
+interface EarlyClaim { text: string; evidence_span_ids: string[]; problem?: string | null }
 interface Entry { name: string; seconds: string; details: string[] }
 
 const WARNING = "SYNTHETIC DEMONSTRATION — NOT FOR CLINICAL USE";
@@ -250,7 +250,8 @@ export default function App() {
         if (f.name === "done") setReady(true);
         if (f.name === "conflicts_found") { setConflicts(d.conflicts); setPicks({}); setResolveFail(null); }
         if (f.name === "section_drafted") {
-          setEarly((e) => ({ ...e, [d.section_id]: d.claims }));
+          const claims = (d.claims ?? []).map((c: EarlyClaim) => ({ ...c, problem: d.problem }));
+          setEarly((e) => ({ ...e, [d.section_id]: [...(d.problem ? e[d.section_id] ?? [] : []), ...claims] })); // one event per problem call
           if (!earlyFetched.current) {
             earlyFetched.current = true;
             templateFetch.current ??= api<{ sections: Section[] }>("/api/template").then((t) => t.sections);
@@ -398,8 +399,9 @@ export default function App() {
         return (
           <section key={sec.section_id}>
             <h2 className="text-lg font-semibold">{sec.title}</h2>
-            {claims.length ? claims.map((c) => (
+            {claims.length ? claims.map((c, i) => (
               <div key={c.claim_id}>
+                {c.problem && c.problem !== claims[i - 1]?.problem && <h3 className="font-semibold">{c.problem}</h3>}
                 <span>{c.text}</span>
                 {c.evidence_span_ids.map((id) => snap.passages[id] && <Marker key={id} p={snap.passages[id]} />)}
                 {c.support_status === "needs_review" && (c.clinician_clarification_ids.length
@@ -417,8 +419,9 @@ export default function App() {
       {!snap && template.map((sec) => early[sec.section_id] && (
         <section key={sec.section_id}>
           <h2 className="text-lg font-semibold">{sec.title}</h2>
-          {early[sec.section_id].length ? early[sec.section_id].map((c, i) => (
+          {early[sec.section_id].length ? early[sec.section_id].map((c, i, cs) => (
             <div key={i}>
+              {c.problem && c.problem !== cs[i - 1]?.problem && <h3 className="font-semibold">{c.problem}</h3>}
               <span>{c.text}</span>
               {c.evidence_span_ids.map((id) => earlyPassages[id] && <Marker key={id} p={earlyPassages[id]} />)}
             </div>

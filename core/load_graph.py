@@ -1,4 +1,4 @@
-"""Load pipeline as a LangGraph graph: [extract_note x N, conflict_check] -> merge -> resolve -> [draft_section x N] -> draft (spec: Load graph)."""
+"""Load pipeline as a LangGraph graph: [extract_note x N, conflict_check] -> merge -> normalize -> resolve -> [draft_section x N] -> draft (spec: Load graph)."""
 import operator
 from typing import Annotated, TypedDict
 
@@ -9,9 +9,12 @@ from langgraph.types import Send, interrupt
 
 import core.extract
 import core.models
+import core.problems
 import core.summarize
 from core.conflicts import find_conflicts
 from core.models import ClinicalEvent, ConflictItem, Discrepancy, Document, Draft, Resolution, SourceSpan
+
+HC = "hospital_course"
 
 
 class LoadState(TypedDict, total=False):
@@ -22,6 +25,8 @@ class LoadState(TypedDict, total=False):
     conflict_warnings: list[str]
     events: list[ClinicalEvent]
     extract_warnings: list[str]
+    problems: list[str]  # canonical problems in order, Other last
+    conflict_problem: dict[str, str]
     discrepancies: list[Discrepancy]
     resolutions: list[Resolution]
     sections: Annotated[list[dict], operator.add]  # one record per template section, in completion order
@@ -70,6 +75,12 @@ def merge(state: LoadState) -> dict:
     return {"events": events, "conflicts": conflicts, "extract_warnings": warnings + state["conflict_warnings"], "discrepancies": discrepancies}
 
 
+def normalize(state: LoadState) -> dict:
+    events, problems, conflict_problem, warnings = core.problems.normalize(state["events"], state["conflicts"])
+    return {"events": events, "problems": problems, "conflict_problem": conflict_problem,
+            "extract_warnings": state["extract_warnings"] + warnings}
+
+
 def resolve(state: LoadState) -> dict:
     """Pauses on conflicts; resumes with [{conflict_id, chosen_span_id | None, clarification | None}], one per conflict (the API validates)."""
     if not state["conflicts"]:
@@ -93,18 +104,25 @@ def overlaps(e: ClinicalEvent, conflicts: list[ConflictItem]) -> bool:
 
 def fan_out_sections(state: LoadState) -> list:
     events = [e for e in state["events"] if not overlaps(e, state["conflicts"])]  # drafting never sees raw conflicting events
-    return [Send("draft_section", {"section_id": t["section_id"], "events": events, "spans": state["spans"],
-                                   "resolutions": state["resolutions"]}) for t in core.models.TEMPLATE]
+    common = {"spans": state["spans"], "problem": None}
+    sends = [Send("draft_section", {**common, "section_id": t["section_id"], "events": events, "resolutions": state["resolutions"]})
+             for t in core.models.TEMPLATE if t["section_id"] != HC]
+    for p in state["problems"]:  # one hospital_course call per problem that has events or resolutions
+        evs = [e for e in events if e.problem == p]
+        res = [r for r in state["resolutions"] if state["conflict_problem"][r.conflict_id] == p]
+        if evs or res:
+            sends.append(Send("draft_section", {**common, "section_id": HC, "problem": p, "events": evs, "resolutions": res}))
+    return sends
 
 
 def draft_section(state: dict) -> dict:
-    rec = core.summarize.draft_section(state["section_id"], state["events"], state["spans"], state["resolutions"])
-    return {"sections": [{"section_id": state["section_id"], **rec}]}
+    rec = core.summarize.draft_section(state["section_id"], state["events"], state["spans"], state["resolutions"], state["problem"])
+    return {"sections": [{"section_id": state["section_id"], "problem": state["problem"], **rec}]}
 
 
 def draft(state: LoadState) -> dict:
     """Join: template order, never completion order."""
-    d, warnings = core.summarize.assemble(state["sections"], state["resolutions"])
+    d, warnings = core.summarize.assemble(state["sections"], state["resolutions"], state["problems"], state["conflict_problem"])
     return {"draft": d.model_copy(update={"discrepancies": state["discrepancies"]}), "draft_warnings": warnings}
 
 
@@ -113,12 +131,14 @@ def build():
     g.add_node("extract_note", extract_note)
     g.add_node("conflict_check", conflict_check)
     g.add_node("merge", merge)
+    g.add_node("normalize", normalize)
     g.add_node("resolve", resolve)
     g.add_node("draft_section", draft_section)
     g.add_node("draft", draft)
     g.add_conditional_edges(START, fan_out, ["extract_note", "conflict_check"])
     g.add_edge(["extract_note", "conflict_check"], "merge")
-    g.add_edge("merge", "resolve")
+    g.add_edge("merge", "normalize")
+    g.add_edge("normalize", "resolve")
     g.add_conditional_edges("resolve", fan_out_sections, ["draft_section"])
     g.add_edge("draft_section", "draft")
     g.add_edge("draft", END)

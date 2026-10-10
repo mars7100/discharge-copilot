@@ -78,6 +78,8 @@ def drive(sid: str, events: queue.Queue, graph_input) -> None:
             events.put(("conflicts_found", {"conflicts": conflicts}))
             events.put(DONE)
             return
+        elif "normalize" in u:
+            sessions.update(sid, events=u["normalize"]["events"])
         elif "resolve" in u:
             sessions.update(sid, resolutions=u["resolve"]["resolutions"])
         elif "draft_section" in u:
@@ -85,7 +87,7 @@ def drive(sid: str, events: queue.Queue, graph_input) -> None:
             if not r["documented"] and next(t for t in TEMPLATE if t["section_id"] == r["section_id"])["optional"]:
                 events.put(("section_omitted", {"section_id": r["section_id"]}))
             else:
-                events.put(("section_drafted", {"section_id": r["section_id"], "warnings": r["warnings"],
+                events.put(("section_drafted", {"section_id": r["section_id"], "problem": r["problem"], "warnings": r["warnings"],
                                                 "claims": [c.model_dump(include={"section", "text", "evidence_span_ids"}) for c in r["claims"]]}))
         elif "draft" in u:
             sessions.update(sid, draft=u["draft"]["draft"])

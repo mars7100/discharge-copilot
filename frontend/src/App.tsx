@@ -34,6 +34,8 @@ async function api<T>(path: string, init?: RequestInit): Promise<T> {
 
 function describe(name: string, d: any): string[] {
   const warnings = (d.warnings ?? []).map(String);
+  if (name === "note_extracted") return [`${d.document_id}: ${d.event_count} events`, ...warnings];
+  if (name === "note_failed") return [`${d.document_id}: failed — ${d.detail}`];
   if (name === "extraction_done") return [`${d.event_count} events`, ...warnings];
   if (name === "draft") return [`${d.draft?.claims?.length ?? 0} claims`, ...warnings];
   if (name === "error") return [String(d.detail)];

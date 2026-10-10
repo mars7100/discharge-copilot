@@ -23,10 +23,18 @@ def run_load(sid: str, events: queue.Queue) -> None:
         docs, spans, _ = ingest_dir(FIXTURES / sessions.case_id(sid))
         sessions.update(sid, documents=docs, spans=spans)
         for u in load_graph.stream({"documents": docs, "spans": spans}, stream_mode="updates"):
-            if "extract" in u:
-                sessions.update(sid, events=u["extract"]["events"])
-                events.put(("extraction_done", {"event_count": len(u["extract"]["events"]),
-                                                "warnings": u["extract"]["extract_warnings"]}))
+            if "extract_note" in u:
+                n = u["extract_note"]["notes"][0]
+                if "detail" in n:
+                    events.put(("note_failed", {"document_id": n["document_id"], "detail": n["detail"]}))
+                else:
+                    events.put(("note_extracted", {"document_id": n["document_id"], "event_count": len(n["events"]),
+                                                   "warnings": n["warnings"]}))
+            elif "merge" in u:
+                m = u["merge"]
+                sessions.update(sid, events=m["events"])
+                events.put(("extraction_done", {"event_count": len(m["events"]), "warnings": m["extract_warnings"],
+                                                "conflict_count": len(m["discrepancies"])}))
             elif "draft" in u:
                 sessions.update(sid, draft=u["draft"]["draft"])
                 events.put(("draft", {"draft": u["draft"]["draft"].model_dump(mode="json"),

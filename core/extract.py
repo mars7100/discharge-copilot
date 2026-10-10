@@ -12,9 +12,8 @@ SYSTEM = """You extract clinical events from synthetic hospital notes.
 - date_or_hospital_day: use the note's documented date/hospital day, e.g. "2026-03-04 (Hospital Day 3)".
 - One documented fact per event; never combine unrelated facts in one event.
 - For each hospital day, include vital-sign status and medication status when documented.
-- Set needs_review to true when the notes document conflicting values for the same fact in an overlapping or unclear time period.
-- Report each conflict as exactly one needs_review event citing one passage from each conflicting note; do not set needs_review on any other event."""
-TIMEOUT = 90  # one call for all notes (42 s measured); ticket 06 drops it to 35
+- Set problem to the clinical problem the event belongs to, as named in the note (e.g. "community-acquired pneumonia"), free text; null if the note names none."""
+TIMEOUT = 35  # one call per note
 
 
 class ExtractionResult(BaseModel):
@@ -42,7 +41,7 @@ def extract_events(documents: list[Document], spans: dict[str, SourceSpan]) -> t
                 errors.append(f"retry failed: {e}")
                 break
             continue
-        numbered = [e.model_copy(update={"event_id": f"E{i:02d}"}) for i, e in enumerate(result.events, 1)]
+        numbered = [e.model_copy(update={"event_id": f"E{i:02d}", "needs_review": False}) for i, e in enumerate(result.events, 1)]
         events, errors = check_events(numbered, spans)
         if not errors:
             break

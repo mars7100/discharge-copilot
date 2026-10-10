@@ -28,7 +28,8 @@ def fake_parse(schema, messages, timeout):
         return ExtractionResult(events=[ClinicalEvent(
             event_id="x", date_or_hospital_day="Hospital Day 1", category="presentation", statement=text,
             evidence=[EvidenceRef(span_id=sid, quote=text)])])
-    assert schema is SummaryResult
+    if schema is not SummaryResult:  # conflict check (ticket 06; schema is the implementer's): no conflicts
+        return schema.model_validate({n: [] for n, f in schema.model_fields.items() if f.is_required()})
     sid = re.search(r"spans: (\w+)", user).group(1)
     return SummaryResult(claims=[SummaryClaim(claim_id="x", section="reason_for_admission", text="Admitted.",
                                               evidence_span_ids=[sid], support_status="unverified")])
@@ -45,7 +46,7 @@ def client(monkeypatch):
 def calls(monkeypatch):
     """Stubs the model boundary; records the schema of every call. Set calls.fail to make every call raise."""
     class Calls(list):
-        fail = False
+        fail = False  # True: every call raises; a schema: only calls with that schema raise
         during = None  # optional callback run inside each model call
     rec = Calls()
 
@@ -53,7 +54,7 @@ def calls(monkeypatch):
         rec.append(schema)
         if rec.during:
             rec.during()
-        if rec.fail:
+        if rec.fail is True or rec.fail is schema:
             raise RuntimeError("boom")
         return fake_parse(schema, messages, timeout)
 
@@ -78,6 +79,17 @@ def load(client, sid):
         fields = dict(line.split(": ", 1) for line in block.split("\n"))
         out.append((fields["event"], json.loads(fields["data"])))
     return out
+
+
+NOTES = 6  # case_001 and case_002 have six notes each
+
+
+def names(events):
+    """Event names with the per-note events (ticket 06: one per note, any order) collapsed into one "per_note" entry."""
+    out = [n for n, _ in events if n not in ("note_extracted", "note_failed")]
+    per_note = [n for n, _ in events if n in ("note_extracted", "note_failed")]
+    assert [n for n, _ in events][:len(per_note)] == per_note, "per-note events must come first"
+    return (["per_note"] if len(per_note) == NOTES else per_note) + out
 
 
 def state(client, sid):
@@ -115,11 +127,12 @@ def test_load_streams_extraction_draft_done_and_fills_state(client, calls):
     thread_id = state(client, sid)["chat_thread_id"]
     events = load(client, sid)
 
-    assert [e for e, _ in events] == ["extraction_done", "draft", "done"]
-    (_, extracted), (_, drafted), (_, done) = events
-    assert extracted == {"event_count": 1, "warnings": []}
+    assert names(events) == ["per_note", "extraction_done", "draft", "done"]
+    (_, extracted), (_, drafted), (_, done) = events[NOTES:]
+    assert extracted == {"event_count": NOTES, "warnings": [], "conflict_count": 0}
     assert drafted["warnings"] == [] and done == {}
-    assert calls == [ExtractionResult, SummaryResult]  # every model call went through core.llm.parse
+    # every model call went through core.llm.parse: one extraction per note, one conflict check, then the draft
+    assert calls.count(ExtractionResult) == NOTES and calls[-1] is SummaryResult and len(calls) == NOTES + 2
 
     docs, spans, _ = ingest_dir(ROOT / "fixtures" / "case_001")
     s = state(client, sid)
@@ -127,7 +140,7 @@ def test_load_streams_extraction_draft_done_and_fills_state(client, calls):
     assert [d["document_id"] for d in s["documents"]] == [d.document_id for d in docs]
     assert s["passages"] == {sid_: {"text": sp.text, "document_id": sp.document_id, "filename": sp.filename,
                                     "page": sp.page, "marker": marker(sp)} for sid_, sp in spans.items()}
-    assert len(s["events"]) == 1 and s["events"][0]["evidence"][0]["span_id"] in spans
+    assert len(s["events"]) == NOTES and all(e["evidence"][0]["span_id"] in spans for e in s["events"])
     assert s["draft"] == drafted["draft"]
     cited = s["draft"]["claims"][0]["evidence_span_ids"]
     assert cited and all(c in s["passages"] for c in cited)  # citations resolve through passages
@@ -150,29 +163,29 @@ def test_load_running_true_during_load(client, calls):
 def test_error_streams_one_error_event_and_session_is_reusable(client, calls):
     sid = create(client)
     thread_id = state(client, sid)["chat_thread_id"]
-    assert [e for e, _ in load(client, sid)] == ["extraction_done", "draft", "done"]
+    assert names(load(client, sid)) == ["per_note", "extraction_done", "draft", "done"]
 
-    calls.fail = True
+    calls.fail = ExtractionResult  # every note fails; the conflict check succeeds
     events = load(client, sid)
-    assert len(events) == 1 and events[0][0] == "error"
-    assert events[0][1]["detail"].startswith("ExtractionError: ")
+    assert names(events) == ["per_note", "error"]
+    assert events[-1][1]["detail"].startswith("ExtractionError: ")
     s = state(client, sid)
     assert s["load_running"] is False
     assert s["events"] == [] and s["draft"] is None  # stale results cleared on retry
     assert s["session_id"] == sid and s["chat_thread_id"] == thread_id
 
     calls.fail = False
-    assert [e for e, _ in load(client, sid)] == ["extraction_done", "draft", "done"]
+    assert names(load(client, sid)) == ["per_note", "extraction_done", "draft", "done"]
     s = state(client, sid)
-    assert len(s["events"]) == 1 and s["draft"] is not None and s["chat_thread_id"] == thread_id
+    assert len(s["events"]) == NOTES and s["draft"] is not None and s["chat_thread_id"] == thread_id
 
 
 def test_error_in_draft_step_streams_error_without_done(client, calls):
     sid = create(client)
     calls.during = lambda: setattr(calls, "fail", calls[-1] is SummaryResult)
     events = load(client, sid)
-    assert [e for e, _ in events] == ["extraction_done", "error"]
-    assert events[1][1]["detail"].startswith("SummaryError: ")
+    assert names(events) == ["per_note", "extraction_done", "error"]
+    assert events[-1][1]["detail"].startswith("SummaryError: ")
     assert state(client, sid)["load_running"] is False
 
 
@@ -216,7 +229,7 @@ def test_sessions_on_different_cases_are_isolated(client, calls, concurrent):
 def test_case_001_live_load(client):
     sid = create(client)
     events = load(client, sid)
-    assert [e for e, _ in events] == ["extraction_done", "draft", "done"], events
+    assert names(events) == ["per_note", "extraction_done", "draft", "done"], events
     s = state(client, sid)
     assert len(s["events"]) >= 3 and s["draft"]["claims"]
     assert all(c in s["passages"] for claim in s["draft"]["claims"] for c in claim["evidence_span_ids"])

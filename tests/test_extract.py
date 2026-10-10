@@ -25,7 +25,7 @@ def stub(monkeypatch, *responses):
     calls = []
 
     def parse(schema, messages, timeout):
-        assert schema is ExtractionResult and timeout == 90
+        assert schema is ExtractionResult and timeout == 35
         calls.append(messages)
         r = responses[min(len(calls), len(responses)) - 1]
         if isinstance(r, Exception):

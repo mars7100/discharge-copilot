@@ -11,3 +11,7 @@
 - [ ] Resume continues streaming to done; resolved value appears in the draft with clinician-provided provenance and both source citations
 - [ ] Case without conflicts goes straight to drafting
 - [ ] `live`: case_001 pauses on Medication A; resolving "5 mg initially, 10 mg from Day 3" yields a draft stating it
+
+## Comments
+
+- Ticket 06 skipped `tests/test_summarize.py::test_case_001_draft_flags_only_the_medication_conflict` (no flagged claims until resolutions exist). Unskip it here.

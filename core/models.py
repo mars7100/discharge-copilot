@@ -41,6 +41,13 @@ class ClinicalEvent(BaseModel):
     statement: str                  # documented fact, not model inference
     evidence: list[EvidenceRef] = Field(min_length=1)
     needs_review: bool = False
+    problem: str | None = None      # clinical problem the event belongs to, as named in the note
+
+
+class ConflictItem(BaseModel):
+    conflict_id: str                # placeholder; renumbered D01.. at merge
+    description: str
+    quotes: list[EvidenceRef] = Field(min_length=2)  # one verbatim quote per conflicting passage
 
 
 TEMPLATE = json.loads((Path(__file__).parent / "template.json").read_text())["sections"]  # in export order

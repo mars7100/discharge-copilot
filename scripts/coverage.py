@@ -3,9 +3,8 @@ import json
 import os
 from pathlib import Path
 
-from core.extract import extract_events
 from core.ingest import ingest_dir
-from core.summarize import generate_draft
+from core.load_graph import load_graph
 from core.validate import locate_quote
 
 ROOT = Path(__file__).parent.parent
@@ -18,12 +17,11 @@ def quote_spans(evidence, spans) -> set[str]:
 
 
 def coverage(spans=None, draft=None) -> dict:
-    """Pass spans + draft to reuse a model run; otherwise runs the pipeline."""
+    """Pass spans + draft to reuse a model run; otherwise runs the load graph."""
     expected = json.loads((ROOT / "fixtures" / "case_001_expected.json").read_text())
     if draft is None:
         docs, spans, _ = ingest_dir(ROOT / "fixtures" / "case_001")
-        events, _ = extract_events(docs, spans)
-        draft, _ = generate_draft(events, spans)
+        draft = load_graph.invoke({"documents": docs, "spans": spans})["draft"]
     cited = {sid for c in draft.claims for sid in c.evidence_span_ids}
     facts = expected["expected_facts"]
     missing = [f["fact_id"] for f in facts if not quote_spans(f["evidence"], spans) & cited]

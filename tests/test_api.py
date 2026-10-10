@@ -14,7 +14,7 @@ from core.export import marker
 from core.extract import ExtractionResult
 from core.ingest import ingest_dir
 from core.models import ClinicalEvent, EvidenceRef
-from tests.section_stub import IDS, collapse, dedupe_result, kind, normalization, section_of, section_result
+from tests.section_stub import IDS, SECTION_EVENTS, collapse, dedupe_result, kind, normalization, section_of, section_result
 
 ROOT = Path(__file__).parent.parent
 SPAN_LINE = re.compile(r"^\[(\S+)\] (.+)$", re.M)  # "[span_id] text" lines of the extraction prompt
@@ -239,7 +239,10 @@ def test_case_001_live_load(client):
     sid = create(client)
     events = load(client, sid)
     # ticket 07: case_001 pauses on its conflict; the replayed run includes the resume stream after conflicts_found
-    assert names(events) == ["per_note", "extraction_done", "conflicts_found", "sections", "dedupe_applied", "draft", "done"], events
+    # ticket 09: hospital_course streams one section event per problem, so collapse any run of section events
+    ns = names(events)
+    live = ["sections" if n in SECTION_EVENTS else n for i, n in enumerate(ns) if not (n in SECTION_EVENTS and i and ns[i - 1] in SECTION_EVENTS)]
+    assert live == ["per_note", "extraction_done", "conflicts_found", "sections", "dedupe_applied", "draft", "done"], events
     s = state(client, sid)
     assert len(s["events"]) >= 3 and s["draft"]["claims"]
     assert all(c in s["passages"] for claim in s["draft"]["claims"] for c in claim["evidence_span_ids"])

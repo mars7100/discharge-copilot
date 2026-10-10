@@ -133,7 +133,7 @@ def test_dedupe_schema_restricts_drop_ids_to_exactly_the_joined_claim_ids(client
     assert schema.model_validate({"drop_claim_ids": ids[:2]}).drop_claim_ids == ids[:2]
     with pytest.raises(ValidationError):
         schema.model_validate({"drop_claim_ids": [f"C{n + 1:02d}"]})
-    assert timeout == 35
+    assert timeout == 60  # raised from 35 after live timeouts (contract 10, post-resolution note)
 
 
 # ---------- applying drops ----------

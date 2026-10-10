@@ -79,3 +79,4 @@ After the sections join, one dedupe call reads all claims and returns only the I
 - **Accepted test edits:** the stub and order edits to `tests/section_stub.py`, `tests/test_api.py`, the 06/07/08/09 tests, and the spy in the `case001` fixture in `tests/conftest.py`.
 - Planner resolved TEST_CONTRACT_CONFLICT: `test_ticket06_parallel_load.py::test_conflicts_become_discrepancies_and_sse_reports_each_note` adapted to expect `dedupe_applied` before `draft` on resume (missed in test design).
 - Join and dedupe are one graph node named `draft` (earlier protected tests expect exactly one `Draft` update from the node `draft`). Accepted.
+- Post-resolution (live suite run): dedupe on case_001 took 24–27 s for ~80 claims and timed out on both attempts at 35 s in one run, silently keeping all claims. `DEDUPE_TIMEOUT = 60` in `core/summarize.py`; the schema test asserts 60. Root cause (duplication from every section seeing all events) is ticket 12.

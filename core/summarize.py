@@ -14,6 +14,7 @@ SYSTEM = """You draft a discharge summary for a synthetic hospitalization from e
 - Resolved facts (lines starting with a D ID) are clinician-provided: state each as written, cite its spans, and put its ID in clinician_clarification_ids. Never mention the superseded values as unresolved.
 - claim_id any placeholder; clinician_clarification_ids empty except for resolved facts; support_status "unverified"."""
 TIMEOUT = 35
+DEDUPE_TIMEOUT = 60  # live case_001: ~80 claims, dedupe took 24-27 s
 
 
 class SectionResult(BaseModel):
@@ -124,7 +125,7 @@ def dedupe(draft: Draft) -> tuple[Draft, list[SummaryClaim], list[str]]:
     messages = [{"role": "system", "content": DEDUPE_SYSTEM}, {"role": "user", "content": "Claims:\n" + "\n".join(lines)}]
     for attempt in range(2):
         try:
-            drops = llm.parse(schema, messages, TIMEOUT).drop_claim_ids
+            drops = llm.parse(schema, messages, DEDUPE_TIMEOUT).drop_claim_ids
             break
         except Exception as e:
             if attempt:

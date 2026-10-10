@@ -242,4 +242,7 @@ def test_case_001_draft_has_diagnoses_follow_up_citations_and_the_resolution(cas
     quotes = {Q04[0], Q05[0]}
     assert any("D01" in c.clinician_clarification_ids and quotes <= set(c.evidence_span_ids) for c in claims)
     names = [n for n, _ in case_copy.sse]
-    assert len([n for n in names if n in SECTION_EVENTS]) == len(IDS)
+    # ticket 09: hospital_course streams one section event per problem; every other section exactly once
+    ids = [d["section_id"] for n, d in case_copy.sse if n in SECTION_EVENTS]
+    assert sorted(i for i in ids if i != "hospital_course") == sorted(i for i in IDS if i != "hospital_course")
+    assert "hospital_course" in ids

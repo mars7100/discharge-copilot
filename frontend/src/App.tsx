@@ -45,6 +45,7 @@ function describe(name: string, d: any): string[] {
   if (name === "draft") return [`${d.draft?.claims?.length ?? 0} claims`, ...warnings];
   if (name === "section_drafted") return [`${d.section_id}: ${d.claims?.length ?? 0} claims`, ...warnings];
   if (name === "section_omitted") return [d.section_id];
+  if (name === "dedupe_applied") return [`${d.count} duplicate claims removed`, ...d.removed.map((c: any) => `${c.section}: ${c.text}`)];
   if (name === "error") return [String(d.detail)];
   return [];
 }

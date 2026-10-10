@@ -90,9 +90,11 @@ def drive(sid: str, events: queue.Queue, graph_input) -> None:
                 events.put(("section_drafted", {"section_id": r["section_id"], "problem": r["problem"], "warnings": r["warnings"],
                                                 "claims": [c.model_dump(include={"section", "text", "evidence_span_ids"}) for c in r["claims"]]}))
         elif "draft" in u:
-            sessions.update(sid, draft=u["draft"]["draft"])
-            events.put(("draft", {"draft": u["draft"]["draft"].model_dump(mode="json"),
-                                  "warnings": u["draft"]["draft_warnings"]}))
+            u = u["draft"]
+            sessions.update(sid, draft=u["draft"])
+            events.put(("dedupe_applied", {"count": len(u["removed"]),
+                                           "removed": [c.model_dump(include={"section", "problem", "text"}) for c in u["removed"]]}))
+            events.put(("draft", {"draft": u["draft"].model_dump(mode="json"), "warnings": u["draft_warnings"]}))
     finish(sid, events, ("done", {}))
 
 

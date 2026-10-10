@@ -12,7 +12,7 @@ import pytest
 from core import llm
 from core.export import NOT_DOCUMENTED
 from core.extract import ExtractionResult
-from tests.section_stub import IDS, OPTIONAL, SECTION_EVENTS, kind, normalization, section_of, section_result
+from tests.section_stub import IDS, OPTIONAL, SECTION_EVENTS, dedupe_result, kind, normalization, section_of, section_result
 from tests.test_api import client, create, state  # noqa: F401  (client is a fixture)
 from tests.test_api_ticket04 import approve
 from tests.test_ticket06_parallel_load import conflict_result
@@ -47,6 +47,8 @@ class Model:
             return conflict_result(schema, self.conflicts)
         if k == "normalize":  # ticket 09: maps nothing; code puts unlabeled events and conflicts under one problem
             return normalization(schema)
+        if k == "dedupe":  # ticket 10: nothing to drop
+            return dedupe_result(schema)
         sec = section_of(messages)
         with self.lock:
             self.calls.append((sec, [dict(m) for m in messages]))
@@ -218,14 +220,14 @@ def test_section_events_stream_before_draft_then_done_on_load_and_resume(client,
     _, sse = loaded(client)
     names = [n for n, _ in sse]
     i = names.index("extraction_done") + 1
-    assert set(names[i:i + len(IDS)]) <= set(SECTION_EVENTS) and names[i + len(IDS):] == ["draft", "done"]
+    assert set(names[i:i + len(IDS)]) <= set(SECTION_EVENTS) and names[i + len(IDS):] == ["dedupe_applied", "draft", "done"]
 
     model.conflicts = [(DESC, [Q04, Q05])]
     sid = create(client)
     assert load(client, sid)[-1][0] == "conflicts_found"
     status, sse = submit(client, sid, [clarify()])
     names = [n for n, _ in sse]
-    assert status == 200 and set(names[:len(IDS)]) <= set(SECTION_EVENTS) and names[len(IDS):] == ["draft", "done"]
+    assert status == 200 and set(names[:len(IDS)]) <= set(SECTION_EVENTS) and names[len(IDS):] == ["dedupe_applied", "draft", "done"]
     assert state(client, sid)["draft"] == dict(sse)["draft"]["draft"]
 
 

@@ -31,8 +31,17 @@ def case001():
     from fastapi.testclient import TestClient
 
     from api.app import app
+    import core.llm
+    real, dedupe_calls = core.llm.parse, []
+
+    def spy(schema, messages, timeout):  # ticket 10: keeps each real dedupe call's schema and output
+        out = real(schema, messages, timeout)
+        if "drop_claim_ids" in schema.model_fields:
+            dedupe_calls.append((schema, out))
+        return out
     with pytest.MonkeyPatch.context() as mp:
         mp.chdir(ROOT)
+        mp.setattr(core.llm, "parse", spy)
         client = TestClient(app)
         sid = client.post("/api/sessions", json={"case_id": "case_001"}).json()["session_id"]
         t0 = time.monotonic()
@@ -52,7 +61,8 @@ def case001():
     return SimpleNamespace(docs=s["documents"], spans=s["spans"], events=s["events"],
                            extract_warnings=last["extraction_done"]["warnings"], draft=s["draft"],
                            summary_warnings=last["draft"]["warnings"], sse=sse, load_sse=load_sse,
-                           conflicts=s["conflicts"], resolutions=s["resolutions"], load_seconds=seconds)
+                           conflicts=s["conflicts"], resolutions=s["resolutions"], load_seconds=seconds,
+                           dedupe_calls=dedupe_calls)
 
 
 @pytest.fixture

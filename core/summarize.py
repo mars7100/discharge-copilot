@@ -1,5 +1,7 @@
 """Validated events -> cited discharge-summary Draft, one LLM call per template section (spec §7.3, §7.4)."""
-from pydantic import BaseModel
+from typing import Literal
+
+from pydantic import BaseModel, create_model
 
 from core import llm
 from core.models import TEMPLATE, ClinicalEvent, Draft, Resolution, SourceSpan, SummaryClaim
@@ -103,3 +105,41 @@ def assemble(recs: list[dict], resolutions: list[Resolution], problems: list[str
                                         "evidence_span_ids": list(dict.fromkeys(c.evidence_span_ids + quoted)),
                                         "support_status": "needs_review" if quoted else "unverified"}))
     return Draft(claims=out), warnings
+
+
+DEDUPE_SYSTEM = """You remove duplicate claims from a discharge summary draft. Each line is: claim_id | section | problem | text.
+- Return in drop_claim_ids only the IDs of claims to drop because another claim states the same fact. An empty list is a valid answer.
+- Of each duplicate group, keep the claim in the section where the fact belongs best: a discharge medication stays in discharge_medications, a test result stays in key_events.
+- Never drop claims that are related but say different things."""
+
+
+def dedupe(draft: Draft) -> tuple[Draft, list[SummaryClaim], list[str]]:
+    """Drops claims the model flags as repeats (guarded), renumbers C01.. -> (draft, removed claims, warnings). Never raises."""
+    claims = draft.claims
+    if len(claims) < 2:
+        return draft, [], []
+    ids = tuple(c.claim_id for c in claims)
+    schema = create_model("DedupeResult", drop_claim_ids=(list[Literal[ids]], ...))
+    lines = [f"{c.claim_id} | {c.section} | {c.problem or ''} | {c.text}" for c in claims]
+    messages = [{"role": "system", "content": DEDUPE_SYSTEM}, {"role": "user", "content": "Claims:\n" + "\n".join(lines)}]
+    for attempt in range(2):
+        try:
+            drops = llm.parse(schema, messages, TIMEOUT).drop_claim_ids
+            break
+        except Exception as e:
+            if attempt:
+                return draft, [], [f"dedupe: failed, all claims kept: {e}"]
+    left, warnings = {c.claim_id: c for c in claims}, []
+    for i in dict.fromkeys(d for d in drops if d in left):
+        c = left[i]
+        others = [o for k, o in left.items() if k != i]
+        lone = next((r for r in c.clinician_clarification_ids if not any(r in o.clinician_clarification_ids for o in others)), None)
+        if lone:
+            warnings.append(f"dedupe: {i} ({c.text}) kept, last claim carrying resolution {lone}")
+        elif not any((o.section, o.problem) == (c.section, c.problem) for o in others):
+            warnings.append(f"dedupe: {i} ({c.text}) kept, last claim in its section or problem group")
+        else:
+            del left[i]
+    removed = [c for c in claims if c.claim_id not in left]
+    kept = [c.model_copy(update={"claim_id": f"C{n:02d}"}) for n, c in enumerate(left.values(), 1)]
+    return draft.model_copy(update={"claims": kept}), removed, warnings

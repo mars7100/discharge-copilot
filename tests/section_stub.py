@@ -11,6 +11,9 @@ Ticket 09 additions (test-imposed; the 09 contract leaves the schema name and pr
   conflict IDs (D01...), the other holds raw problem labels. Stub outputs are built with model_construct, so unknown
   labels/IDs reach the code even if the implementation narrows the item types.
 - A hospital_course call names its canonical problem in a line "Problem: <name>" before any assistant turn.
+
+Ticket 10 additions: the dedupe call is recognized by a schema with a `drop_claim_ids` field (contract seam). Stubs answer
+it with dedupe_result (default: an empty drop list), built with model_construct so unknown IDs reach the code.
 """
 import re
 from typing import get_origin
@@ -28,6 +31,8 @@ SECTION_EVENTS = ("section_drafted", "section_omitted")
 def kind(schema) -> str:
     if schema is ExtractionResult:
         return "extract"
+    if "drop_claim_ids" in schema.model_fields:
+        return "dedupe"
     if "documented" in schema.model_fields:
         return "summary"
     if any(f.annotation == list[ConflictItem] for f in schema.model_fields.values()):
@@ -36,6 +41,11 @@ def kind(schema) -> str:
         return "normalize"
     raise AssertionError(f"unexpected schema {schema.__name__}: ticket 08 drafts each section with a schema that has "
                          "a `documented` field; ticket 09 normalizes problems with a list of {name, labels, conflict IDs}")
+
+
+def dedupe_result(schema, ids=()):
+    """The dedupe call's answer: drop these claim IDs (bypasses validation, so out-of-set IDs reach the code)."""
+    return schema.model_construct(drop_claim_ids=list(ids))
 
 
 def problem_list(schema):

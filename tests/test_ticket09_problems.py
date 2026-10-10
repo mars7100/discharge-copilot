@@ -17,7 +17,7 @@ from core.export import to_markdown
 from core.extract import ExtractionResult
 from core.load_graph import load_graph
 from core.models import ClinicalEvent, Draft, SummaryClaim
-from tests.section_stub import IDS, SECTION_EVENTS, kind, normalization, problem_of, section_of, section_result
+from tests.section_stub import IDS, SECTION_EVENTS, dedupe_result, kind, normalization, problem_of, section_of, section_result
 from tests.test_api import client, create, state  # noqa: F401  (client is a fixture)
 from tests.test_api_ticket04 import approve
 from tests.test_ticket06_parallel_load import conflict_result
@@ -97,6 +97,8 @@ class Model:
             if attempt <= self.normalize_failures:
                 raise RuntimeError("normalization boom")
             return normalization(schema, self.problems)
+        if k == "dedupe":  # ticket 10: nothing to drop
+            return dedupe_result(schema)
         sec = section_of(messages)
         problem = problem_of(messages) if sec == HC else None
         with self.lock:
@@ -278,7 +280,7 @@ def test_section_drafted_per_problem_carries_problem_and_undocumented_groups_are
     names = [n for n, _ in sse]
     i = names.index("extraction_done") + 1
     n_events = len(OTHER_SECTIONS) + len(ORDER)
-    assert set(names[i:i + n_events]) <= set(SECTION_EVENTS) and names[i + n_events:] == ["draft", "done"]
+    assert set(names[i:i + n_events]) <= set(SECTION_EVENTS) and names[i + n_events:] == ["dedupe_applied", "draft", "done"]
 
     hc = [d for n, d in sse if n == "section_drafted" and d["section_id"] == HC]
     assert sorted(d["problem"] for d in hc) == sorted(ORDER)  # one per problem call, none omitted

@@ -1,4 +1,4 @@
-"""Load pipeline as a LangGraph graph: [extract_note x N, conflict_check] -> merge -> normalize -> resolve -> [draft_section x N] -> draft (spec: Load graph)."""
+"""Load pipeline as a LangGraph graph: [extract_note x N, conflict_check] -> merge -> normalize -> resolve -> [draft_section x N] -> draft (join, dedupe) (spec: Load graph)."""
 import operator
 from typing import Annotated, TypedDict
 
@@ -12,7 +12,7 @@ import core.models
 import core.problems
 import core.summarize
 from core.conflicts import find_conflicts
-from core.models import ClinicalEvent, ConflictItem, Discrepancy, Document, Draft, Resolution, SourceSpan
+from core.models import ClinicalEvent, ConflictItem, Discrepancy, Document, Draft, Resolution, SourceSpan, SummaryClaim
 
 HC = "hospital_course"
 
@@ -31,6 +31,7 @@ class LoadState(TypedDict, total=False):
     resolutions: list[Resolution]
     sections: Annotated[list[dict], operator.add]  # one record per template section, in completion order
     draft: Draft
+    removed: list[SummaryClaim]
     draft_warnings: list[str]
 
 
@@ -121,9 +122,10 @@ def draft_section(state: dict) -> dict:
 
 
 def draft(state: LoadState) -> dict:
-    """Join: template order, never completion order."""
+    """Join in template order (never completion order), then dedupe."""
     d, warnings = core.summarize.assemble(state["sections"], state["resolutions"], state["problems"], state["conflict_problem"])
-    return {"draft": d.model_copy(update={"discrepancies": state["discrepancies"]}), "draft_warnings": warnings}
+    d, removed, dedupe_warnings = core.summarize.dedupe(d.model_copy(update={"discrepancies": state["discrepancies"]}))
+    return {"draft": d, "removed": removed, "draft_warnings": warnings + dedupe_warnings}
 
 
 def build():

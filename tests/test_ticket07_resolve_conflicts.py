@@ -21,7 +21,7 @@ from core.extract import ExtractionResult
 from core.ingest import ingest_dir
 from core.load_graph import load_graph
 from core.models import ClinicalEvent, Discrepancy, Draft, EvidenceRef, SummaryClaim
-from tests.section_stub import IDS, collapse, kind, normalization, section_of, section_result
+from tests.section_stub import IDS, collapse, dedupe_result, kind, normalization, section_of, section_result
 from tests.test_api import ROOT, client, create, state  # noqa: F401  (client is a fixture)
 from tests.test_api_ticket04 import OPERATIONS, approve, asked, call  # noqa: F401  (asked is a fixture)
 from tests.test_ticket06_parallel_load import conflict_result
@@ -88,6 +88,8 @@ class Model:
             return conflict_result(schema, self.conflicts)
         if k == "normalize":  # ticket 09: maps nothing; code puts unlabeled events and conflicts under one problem
             return normalization(schema)
+        if k == "dedupe":  # ticket 10: nothing to drop
+            return dedupe_result(schema)
         self.on_summary()
         if self.summary_fail:
             raise RuntimeError("summary boom")
@@ -212,7 +214,7 @@ def test_resume_drafts_resolved_fact_with_both_citations(client, model, how):
     text = f"{DESC}: {Q05[1]}" if how == "pick" else CLARIFICATION
     status, sse = submit(client, sid, [body])
     assert status == 200
-    assert collapse([n for n, _ in sse]) == ["sections", "draft", "done"], sse  # ticket 08: section events first
+    assert collapse([n for n, _ in sse]) == ["sections", "dedupe_applied", "draft", "done"], sse  # ticket 08: section events first
 
     s = state(client, sid)
     assert s["paused"] is False and s["load_running"] is False
@@ -267,7 +269,7 @@ def test_no_conflicts_streams_straight_to_done(client, model):
     model.conflicts = []
     sid = create(client)
     names = [n for n, _ in load(client, sid)]
-    assert "conflicts_found" not in names and collapse(names)[-4:] == ["extraction_done", "sections", "draft", "done"]
+    assert "conflicts_found" not in names and collapse(names)[-5:] == ["extraction_done", "sections", "dedupe_applied", "draft", "done"]
     s = state(client, sid)
     assert s["paused"] is False and s["conflicts"] == [] and s["resolutions"] == []
 

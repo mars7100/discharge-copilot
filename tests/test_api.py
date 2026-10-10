@@ -14,7 +14,7 @@ from core.export import marker
 from core.extract import ExtractionResult
 from core.ingest import ingest_dir
 from core.models import ClinicalEvent, EvidenceRef
-from tests.section_stub import IDS, collapse, kind, normalization, section_of, section_result
+from tests.section_stub import IDS, collapse, dedupe_result, kind, normalization, section_of, section_result
 
 ROOT = Path(__file__).parent.parent
 SPAN_LINE = re.compile(r"^\[(\S+)\] (.+)$", re.M)  # "[span_id] text" lines of the extraction prompt
@@ -28,6 +28,8 @@ def fake_parse(schema, messages, timeout):
         return ExtractionResult(events=[ClinicalEvent(
             event_id="x", date_or_hospital_day="Hospital Day 1", category="presentation", statement=text,
             evidence=[EvidenceRef(span_id=sid, quote=text)], problem="Pneumonia")])
+    if kind(schema) == "dedupe":  # ticket 10: nothing to drop
+        return dedupe_result(schema)
     if kind(schema) == "normalize":  # ticket 09: the one label maps onto itself
         return normalization(schema, [("Pneumonia", ["Pneumonia"], [])])
     if kind(schema) == "conflict":  # conflict check (ticket 06; schema is the implementer's): no conflicts
@@ -130,7 +132,7 @@ def test_load_streams_extraction_draft_done_and_fills_state(client, calls):
     thread_id = state(client, sid)["chat_thread_id"]
     events = load(client, sid)
 
-    assert names(events) == ["per_note", "extraction_done", "sections", "draft", "done"]
+    assert names(events) == ["per_note", "extraction_done", "sections", "dedupe_applied", "draft", "done"]
     (_, extracted), (_, drafted), (_, done) = events[NOTES], events[-2], events[-1]  # section events between (ticket 08)
     assert extracted == {"event_count": NOTES, "warnings": [], "conflict_count": 0}
     assert drafted["warnings"] == [] and done == {}
@@ -170,7 +172,7 @@ def test_load_running_true_during_load(client, calls):
 def test_error_streams_one_error_event_and_session_is_reusable(client, calls):
     sid = create(client)
     thread_id = state(client, sid)["chat_thread_id"]
-    assert names(load(client, sid)) == ["per_note", "extraction_done", "sections", "draft", "done"]
+    assert names(load(client, sid)) == ["per_note", "extraction_done", "sections", "dedupe_applied", "draft", "done"]
 
     calls.fail = ExtractionResult  # every note fails; the conflict check succeeds
     events = load(client, sid)
@@ -182,7 +184,7 @@ def test_error_streams_one_error_event_and_session_is_reusable(client, calls):
     assert s["session_id"] == sid and s["chat_thread_id"] == thread_id
 
     calls.fail = False
-    assert names(load(client, sid)) == ["per_note", "extraction_done", "sections", "draft", "done"]
+    assert names(load(client, sid)) == ["per_note", "extraction_done", "sections", "dedupe_applied", "draft", "done"]
     s = state(client, sid)
     assert len(s["events"]) == NOTES and s["draft"] is not None and s["chat_thread_id"] == thread_id
 
@@ -237,7 +239,7 @@ def test_case_001_live_load(client):
     sid = create(client)
     events = load(client, sid)
     # ticket 07: case_001 pauses on its conflict; the replayed run includes the resume stream after conflicts_found
-    assert names(events) == ["per_note", "extraction_done", "conflicts_found", "sections", "draft", "done"], events
+    assert names(events) == ["per_note", "extraction_done", "conflicts_found", "sections", "dedupe_applied", "draft", "done"], events
     s = state(client, sid)
     assert len(s["events"]) >= 3 and s["draft"]["claims"]
     assert all(c in s["passages"] for claim in s["draft"]["claims"] for c in claim["evidence_span_ids"])

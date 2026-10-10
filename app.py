@@ -12,10 +12,11 @@ from core.review_graph import ask
 from core.revise import accept, propose
 from core.summarize import generate_draft
 
-CASE_DIR = Path(__file__).parent / "fixtures" / "case_001"
+FIXTURES = Path(__file__).parent / "fixtures"
+CASES = sorted(d.name for d in FIXTURES.glob("case_*") if d.is_dir())
 ss = st.session_state
 APP_KEYS = ("documents", "spans", "ingest_warnings", "events", "extract_warnings", "draft", "summary_warnings",
-            "revisions", "clarifications", "pending", "chat", "thread_id", "error")
+            "loaded_case", "revisions", "clarifications", "pending", "chat", "thread_id", "error")
 
 st.set_page_config(page_title="Discharge Copilot", layout="wide")
 st.title("Discharge Copilot")
@@ -24,7 +25,8 @@ st.error("SYNTHETIC DATA — DEMO ONLY. Not for clinical use.")
 
 def load_case():
     ss.pop("error", None)  # overwrite app keys only; clearing widget state inside a callback drops clicks
-    ss.documents, ss.spans, ss.ingest_warnings = ingest_dir(CASE_DIR)
+    ss.loaded_case = ss.case
+    ss.documents, ss.spans, ss.ingest_warnings = ingest_dir(FIXTURES / ss.case)
     ss.revisions, ss.clarifications, ss.pending, ss.chat = [], [], None, []
     ss.thread_id = uuid.uuid4().hex  # new conversation memory in the review graph
     try:
@@ -54,7 +56,8 @@ def resolve(accepted: bool):
 
 
 with st.sidebar:
-    st.button("Load sample case", on_click=load_case, type="primary")
+    st.selectbox("Case", CASES, key="case")
+    st.button("Load case", on_click=load_case, type="primary")
     st.button("Reset session", on_click=lambda: [ss.pop(k) for k in APP_KEYS if k in ss])
 
 if "documents" not in ss:
@@ -161,8 +164,8 @@ with t_out:
             st.rerun()
     else:
         st.success(f"Approved by {draft.reviewer} at {draft.approved_at:%Y-%m-%d %H:%M}")
-    md = to_markdown(ss.draft, spans, ss.documents, clarifications=ss.clarifications)
+    md = to_markdown(ss.draft, spans, ss.documents, case_id=ss.loaded_case, clarifications=ss.clarifications)
     st.download_button("Export Markdown" + ("" if ss.draft.status == "approved" else " (unapproved draft)"),
-                       md, file_name="discharge_summary_case_001.md")
+                       md, file_name=f"discharge_summary_{ss.loaded_case}.md")
     with st.expander("Preview export"):
         st.markdown(md)

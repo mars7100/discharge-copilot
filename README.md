@@ -12,11 +12,11 @@ cp .env.example .env                      # add OPENAI_API_KEY (required: every 
 .venv/bin/streamlit run app.py
 ```
 
-Click **Load sample case**. Extraction and the draft are live model calls (about 1 minute); questions take a few seconds.
+Click **Load case**. Extraction and the draft are live model calls (about 1 minute); questions take a few seconds.
 
 ## Demo script
 
-1. Load sample case → **Summary** tab: open a citation popover
+1. Load case → **Summary** tab: open a citation popover
 2. **Needs review** tab: D01 side by side
 3. **Ask about the notes** (chat): "Why do the notes mention different doses?"
 4. Follow-up in the same chat: "What was the reason for the Medication A dose change?"
@@ -25,7 +25,7 @@ Click **Load sample case**. Extraction and the draft are live model calls (about
 7. **Approve & export**: Approve → Export
 
 Any question works. The chat sends the last 3 question/answer turns with each new question, so follow-ups can refer
-to earlier answers. Failures show "Question failed". **Load sample case** starts a new conversation.
+to earlier answers. Failures show "Question failed". **Load case** starts a new conversation.
 
 ## Architecture
 

@@ -4,10 +4,14 @@
 
 **Blocked by:** 01
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] List-cases operation returns every case under fixtures
-- [ ] Start-load streams at least: extraction done, draft snapshot, done; errors stream an error event and leave the session usable for retry
-- [ ] Get-session-state returns documents, draft with citations, and load-running flag
-- [ ] Two sessions loading different cases do not see each other's state
-- [ ] Tests through FastAPI's test client with the model boundary stubbed; one `live` test loads case_001 end to end
+- [x] List-cases operation returns every case under fixtures
+- [x] Start-load streams at least: extraction done, draft snapshot, done; errors stream an error event and leave the session usable for retry
+- [x] Get-session-state returns documents, draft with citations, and load-running flag
+- [x] Two sessions loading different cases do not see each other's state
+- [x] Tests through FastAPI's test client with the model boundary stubbed; one `live` test loads case_001 end to end
+
+## Comments
+
+- Resolved in `5de2384`. Contract: `03a-contract.md`. Routes: `GET /api/cases`, `POST /api/sessions`, `POST /api/sessions/{id}/load` (SSE), `GET /api/sessions/{id}`. Retry reuses the session. A second load in a running session is unguarded until 04. No checkpointer until 07. Review fixed path traversal on create and two `load_running` timing gaps. Dot-directories are excluded from the case list (user decision). Checked on a real uvicorn server: `extraction_done` at 26 s, `draft` at 41 s on case_001; a client disconnect does not stop the load.

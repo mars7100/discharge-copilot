@@ -11,3 +11,7 @@
 - [ ] Event numbering is identical across runs for identical model output
 - [ ] Per-note "extracted" events stream and render in the UI
 - [ ] `live`: case_001 still yields the Medication A conflict; load time recorded and compared with baseline
+
+## Comments
+
+- From 01: drop the extraction timeout (`TIMEOUT` in `core/extract.py`) from 90 s to 35 s once extraction is one call per note.

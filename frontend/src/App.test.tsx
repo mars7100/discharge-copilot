@@ -99,8 +99,8 @@ async function startLoad(caseId = "case_001") {
   const user = userEvent.setup();
   render(<App />);
   await screen.findByRole("option", { name: caseId });
-  await user.selectOptions(screen.getByRole("combobox"), caseId);
-  await user.click(screen.getByRole("button", { name: /load/i }));
+  await user.selectOptions(screen.getByRole("combobox", { name: /case/i }), caseId);
+  await user.click(screen.getByRole("button", { name: /^load$/i }));
   return user;
 }
 
@@ -143,19 +143,19 @@ describe("discharge copilot UI", () => {
     const fetching = stubApi([first, second]);
     const user = await startLoad("case_001");
 
-    await waitFor(() => expect((screen.getByRole("button", { name: /load/i }) as HTMLButtonElement).disabled).toBe(true));
-    expect((screen.getByRole("combobox") as HTMLSelectElement).disabled).toBe(true);
+    await waitFor(() => expect((screen.getByRole("button", { name: /^load$/i }) as HTMLButtonElement).disabled).toBe(true));
+    expect((screen.getByRole("combobox", { name: /case/i }) as HTMLSelectElement).disabled).toBe(true);
 
     first.send("extraction_done", { event_count: 1, warnings: [] });
     first.send("draft", { draft: DRAFT, warnings: [] });
     first.send("done", {});
     first.close();
-    await waitFor(() => expect((screen.getByRole("button", { name: /load/i }) as HTMLButtonElement).disabled).toBe(false));
-    expect((screen.getByRole("combobox") as HTMLSelectElement).disabled).toBe(false);
+    await waitFor(() => expect((screen.getByRole("button", { name: /^load$/i }) as HTMLButtonElement).disabled).toBe(false));
+    expect((screen.getByRole("combobox", { name: /case/i }) as HTMLSelectElement).disabled).toBe(false);
     await screen.findByText("Treated with IV antibiotics.");
 
-    await user.selectOptions(screen.getByRole("combobox"), "case_003");
-    await user.click(screen.getByRole("button", { name: /load/i }));
+    await user.selectOptions(screen.getByRole("combobox", { name: /case/i }), "case_003");
+    await user.click(screen.getByRole("button", { name: /^load$/i }));
     await waitFor(() => expect(requests(fetching)).toContain("POST /api/sessions/S2/load"));
     const creates = fetching.mock.calls.filter((_, i) => requests(fetching)[i] === "POST /api/sessions");
     expect(creates.map(([, init]) => JSON.parse(String(init?.body)))).toEqual([{ case_id: "case_001" }, { case_id: "case_003" }]);

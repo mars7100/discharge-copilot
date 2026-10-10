@@ -29,14 +29,14 @@ it("Retry after a failed session create does not reload the previous case's sess
   const user = userEvent.setup();
   render(<App />);
   await screen.findByRole("option", { name: "case_002" });
-  await user.click(screen.getByRole("button", { name: /load/i }));
+  await user.click(screen.getByRole("button", { name: /^load$/i }));
   await screen.findByText(/^done\b/);
 
-  await user.selectOptions(screen.getByRole("combobox"), "case_002");
-  await user.click(screen.getByRole("button", { name: /load/i }));
+  await user.selectOptions(screen.getByRole("combobox", { name: /case/i }), "case_002");
+  await user.click(screen.getByRole("button", { name: /^load$/i }));
   const alert = await screen.findByRole("alert");
   const retry = within(alert).getByRole("button", { name: /retry/i }) as HTMLButtonElement;
-  await waitFor(() => expect(screen.getByRole("button", { name: /load/i })).toHaveProperty("disabled", false));
+  await waitFor(() => expect(screen.getByRole("button", { name: /^load$/i })).toHaveProperty("disabled", false));
   await user.click(retry);
   expect(calls.filter((c) => c === "POST /api/sessions/S1/load")).toHaveLength(1);
 });

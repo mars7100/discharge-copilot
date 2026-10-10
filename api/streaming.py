@@ -41,7 +41,7 @@ def run_load(sid: str, events: queue.Queue) -> None:
 
 def stream_load(sid: str):
     """Marks the load running and starts the worker now (it outlives a disconnect); returns the SSE generator."""
-    sessions.update(sid, load_running=True, events=[], draft=None)
+    sessions.update(sid, load_running=True, events=[], draft=None, revisions=[], clarifications=[], pending=None)
     events: queue.Queue = queue.Queue()
     threading.Thread(target=run_load, args=(sid, events)).start()
 

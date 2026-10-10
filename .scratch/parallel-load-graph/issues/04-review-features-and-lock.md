@@ -4,10 +4,10 @@
 
 **Blocked by:** 03a, 03b
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] Ask: cited answers, follow-ups use last turns, failures show "Question failed"
-- [ ] Corrections: propose shows a diff, accept updates the draft with clinician-provided label and resets approval, reject leaves it unchanged
-- [ ] Approve and export: Markdown with synthetic label, status, discrepancies/resolutions, clarifications and source appendix
-- [ ] Ask, correction, approve and export return 409 while load is running; UI controls disabled until done
-- [ ] Demo script from the README runs end to end in the new app
+- [x] Ask: cited answers, follow-ups use last turns, failures show "Question failed"
+- [x] Corrections: propose shows a diff, accept updates the draft with clinician-provided label and resets approval, reject leaves it unchanged
+- [x] Approve and export: Markdown with synthetic label, status, discrepancies/resolutions, clarifications and source appendix
+- [x] Ask, correction, approve and export return 409 while load is running; UI controls disabled until done
+- [x] Demo script from the README runs end to end in the new app

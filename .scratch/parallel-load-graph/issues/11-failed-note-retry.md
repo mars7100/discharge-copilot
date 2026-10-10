@@ -4,9 +4,13 @@
 
 **Blocked by:** 09, 10
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] A failing note does not fail the load; note-failed and note-retrying events stream and render
-- [ ] On retry success only affected sections are redrafted; dedupe reruns; draft snapshot streams
-- [ ] On final failure a warning names the missing note
-- [ ] Done (and unlock) is sent only after retries settle
+- [x] A failing note does not fail the load; note-failed and note-retrying events stream and render
+- [x] On retry success only affected sections are redrafted; dedupe reruns; draft snapshot streams
+- [x] On final failure a warning names the missing note
+- [x] Done (and unlock) is sent only after retries settle
+
+## Comments
+
+- Resolved in 4e76a7d. Contract: `11-contract.md`. No live test (failures cannot be triggered on demand); covered by stubbed graph/API/frontend tests. Retries run after the first draft (LangGraph supersteps are lockstep). Non-hospital-course sections are all redrafted when any event is added (they receive all events); hospital course redrafts only affected problem groups. Review fixed a variable-shadowing bug in problems.normalize (regression test in tests/test_ticket11_review.py).

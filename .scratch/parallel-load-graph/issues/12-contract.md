@@ -72,3 +72,4 @@ Measured with `$TMPDIR/measure.py`, which wraps `core.llm.parse` with timing and
   - stub events tagged `EVERY_SECTION` in the 07/09/11/test_api tests;
   - `EVERY_SECTION` in `tests/section_stub.py`;
   - `resume_seconds` and `dedupe_seconds` in the `case001` fixture.
+- Post-resolution (ticket 13 live run): a missed `discharge_diagnoses` tag dropped that optional section silently. Per user decision (option A), every section other than hospital_course with no tagged events now falls back to every non-conflicting event and every resolution; optional sections included. The 12 routing tests were updated to match. Live after the change: 32/32 passed; claims before dedupe 64 (removed 10); resume to done 33.7 s; dedupe 14.8 s.

@@ -121,7 +121,8 @@ def test_each_section_other_than_hospital_course_receives_exactly_its_routed_non
     by = calls(model)
     expected = {"reason_for_admission": {"rfa_fact"}, "discharge_diagnoses": {"rfa_fact"},
                 "key_events": {"key_fact", "followup_fact"}, "condition_at_discharge": {"followup_fact"},
-                "discharge_medications": {"med_fact"}, "follow_up": {"followup_fact"}, "pending_items": set()}
+                "discharge_medications": {"med_fact"}, "follow_up": {"followup_fact"},
+                "pending_items": set(NON_CONFLICTING)}  # nothing tagged: fallback (a routed resolution alone does not count)
     for sec, statements in expected.items():
         assert len(by[(sec, None)]) == 1, sec
         assert seen(by[(sec, None)][0]) == statements, sec
@@ -129,7 +130,8 @@ def test_each_section_other_than_hospital_course_receives_exactly_its_routed_non
 
 def test_an_untagged_event_reaches_only_the_hospital_course_call_for_its_problem(model, routed):
     reached = sorted((sec, p) for (sec, p), ms in calls(model).items() for m in ms if "untagged_fact" in seen(m))
-    assert reached == [(HC, "Pneumonia")]
+    # its problem's hospital_course call, plus the sections on the fallback (nothing tagged), which get every event
+    assert reached == sorted([(HC, "Pneumonia"), ("patient_instructions", None), ("pending_items", None), ("procedures", None)], key=str)
     assert seen(calls(model)[(HC, "Pneumonia")][0]) == {"rfa_fact", "untagged_fact", "key_fact"}
     assert seen(calls(model)[(HC, "Hypertension")][0]) == {"med_fact", "followup_fact"}
     assert seen(calls(model)[(HC, "Other")][0]) == {"other_fact"}  # untagged, no problem: Other, as in 09
@@ -150,20 +152,18 @@ def test_required_section_with_nothing_routed_gets_every_non_conflicting_event(c
     assert len(by[("condition_at_discharge", None)]) == 1
     assert seen(by[("condition_at_discharge", None)][0]) == set(NON_CONFLICTING)
     assert seen(by[("reason_for_admission", None)][0]) == {"rfa_fact"}  # routed required sections keep their routing
-    assert ("procedures", None) not in by and ("patient_instructions", None) not in by  # never for optional sections
+    assert seen(by[("procedures", None)][0]) == set(NON_CONFLICTING)  # optional sections fall back too (missed tags)
 
 
-def test_optional_section_with_nothing_routed_makes_no_call_and_streams_section_omitted(client, model, routed):
+def test_optional_section_with_nothing_routed_falls_back_to_every_event(client, model, routed):
+    """Post-12 decision: a missed tag dropped discharge_diagnoses live, so optional sections fall back like required ones."""
     sid, sse = routed
     by = calls(model)
-    nothing = {"procedures", "patient_instructions"}  # no routed events, no routed resolution
-    assert not nothing & {sec for sec, _ in by}
-    assert ("pending_items", None) in by  # a routed resolution alone is enough for a call
-    omitted = [d for n, d in sse if n == "section_omitted"]
-    assert nothing <= {d["section_id"] for d in omitted}
+    for sec in ("procedures", "patient_instructions"):  # no routed events, no routed resolution
+        assert len(by[(sec, None)]) == 1, sec
+        assert seen(by[(sec, None)][0]) == set(NON_CONFLICTING), sec
     ids = [d["section_id"] for n, d in sse if n in SECTION_EVENTS]  # still one section event per section
     assert sorted(i for i in ids if i != HC) == sorted(NON_HC)
-    assert not nothing & {c["section"] for c in state(client, sid)["draft"]["claims"]}
 
 
 # ---------- resolutions ----------
@@ -172,7 +172,9 @@ def test_resolution_reaches_a_section_only_through_its_tagged_raw_conflicting_ev
     by = calls(model)
     carried = {k for k, ms in by.items() if any(CLARIFICATION in text_of(m) for m in ms)}
     # dose_04 is tagged discharge_medications, dose_05 pending_items; key_fact shares Q04's passage without overlapping
-    assert carried == {("discharge_medications", None), ("pending_items", None), (HC, "Pneumonia")}
+    # sections on the fallback (nothing tagged) get every resolution
+    assert carried == {("discharge_medications", None), ("pending_items", None), (HC, "Pneumonia"),
+                       ("procedures", None), ("patient_instructions", None)}
 
 
 # ---------- ticket 11 redraft ----------
@@ -196,14 +198,16 @@ def test_recovered_note_redrafts_only_sections_whose_routed_input_changed(client
 
     first = {("reason_for_admission", None), ("key_events", None), ("follow_up", None), ("discharge_diagnoses", None),
              ("discharge_medications", None), ("condition_at_discharge", None),
+             ("procedures", None), ("patient_instructions", None), ("pending_items", None),
              (HC, "Pneumonia"), (HC, "Hypertension"), (HC, "Other")}
-    redrafted = {("key_events", None), ("condition_at_discharge", None), (HC, "Hypertension")}
+    fallback = {("condition_at_discharge", None), ("procedures", None), ("patient_instructions", None), ("pending_items", None)}
+    redrafted = {("key_events", None), (HC, "Hypertension")} | fallback
     assert dict(model.section_counts()) == {k: 1 + (k in redrafted) for k in first}
 
     retrying, settles, rest = settled(sse)
     assert retrying == ["note_02"] and settles["note_02"][0] == "note_extracted"
     assert rest[-3:] == ["dedupe_applied", "draft", "done"]
-    tail = [(d["section_id"], d["problem"]) for n, d in after_first_draft(sse) if n in SECTION_EVENTS]
+    tail = [(d["section_id"], d.get("problem")) for n, d in after_first_draft(sse) if n in SECTION_EVENTS]  # section_omitted has no problem
     assert sorted(tail, key=str) == sorted(redrafted, key=str)
     for k in redrafted:  # the redraft carries the recovered event
         assert "recovered_fact" in text_of(calls(model)[k][-1]), k

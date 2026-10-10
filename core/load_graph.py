@@ -116,11 +116,12 @@ def overlaps(e: ClinicalEvent, conflicts: list[ConflictItem]) -> bool:
 
 def routed(state: LoadState, section_id: str) -> tuple[list[ClinicalEvent], list[Resolution]]:
     """A section other than hospital_course: its tagged non-conflicting events, and the resolutions whose raw conflicting events are tagged for it.
-    A required section with no tagged events falls back to every non-conflicting event and every resolution."""
+    A section with no tagged events falls back to every non-conflicting event and every resolution, so a missed tag never
+    drops a section."""
     conflicts = {c.conflict_id: c for c in state["conflicts"]}
     events = [e for e in state["events"] if not overlaps(e, state["conflicts"])]  # drafting never sees raw conflicting events
     tagged = [e for e in events if section_id in e.sections]
-    if not tagged and not next(t["optional"] for t in core.models.TEMPLATE if t["section_id"] == section_id):
+    if not tagged:
         return events, state["resolutions"]
     return tagged, [r for r in state["resolutions"] if any(section_id in e.sections and overlaps(e, [conflicts[r.conflict_id]]) for e in state["events"])]
 

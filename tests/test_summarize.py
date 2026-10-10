@@ -26,7 +26,8 @@ def test_case_001_draft_flags_only_the_medication_conflict(live_draft):
     _, spans, draft, warnings = live_draft
     assert not any("retry failed" in w for w in warnings), warnings
     assert all(s in spans for c in draft.claims for s in c.evidence_span_ids)  # T03
-    assert [d.source_span_ids for d in draft.discrepancies] == [["note_04_p01_b07", "note_05_p01_b04"]]  # T04
+    assert len(draft.discrepancies) == 1  # T04; the model may also quote another passage documenting a conflicting value
+    assert {"note_04_p01_b07", "note_05_p01_b04"} <= set(draft.discrepancies[0].source_span_ids)
     flagged = [c for c in draft.claims if c.support_status == "needs_review"]
     assert flagged and all("Medication A" in c.text for c in flagged)
 

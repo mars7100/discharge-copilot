@@ -31,6 +31,11 @@ class EvidenceRef(BaseModel):
     start: int | None = None        # char offset of quote in span text; LLM outputs null, validation fills it
 
 
+TEMPLATE = json.loads((Path(__file__).parent / "template.json").read_text())["sections"]  # in export order
+Section = Literal[tuple(s["section_id"] for s in TEMPLATE)]
+RoutedSection = Literal[tuple(s["section_id"] for s in TEMPLATE if s["section_id"] != "hospital_course")]
+
+
 class ClinicalEvent(BaseModel):
     event_id: str
     date_or_hospital_day: str | None
@@ -42,6 +47,7 @@ class ClinicalEvent(BaseModel):
     evidence: list[EvidenceRef] = Field(min_length=1)
     needs_review: bool = False
     problem: str | None = None      # clinical problem the event belongs to, as named in the note
+    sections: list[RoutedSection] = []  # sections other than hospital_course this event belongs in (ticket 12); [] = hospital course only
 
 
 class ConflictItem(BaseModel):
@@ -57,10 +63,6 @@ class Resolution(BaseModel):
     chosen_span_id: str | None      # set for a picked value, None for a typed clarification
     quotes: list[EvidenceRef]
     provenance: Literal["clinician-provided"] = "clinician-provided"
-
-
-TEMPLATE = json.loads((Path(__file__).parent / "template.json").read_text())["sections"]  # in export order
-Section = Literal[tuple(s["section_id"] for s in TEMPLATE)]
 
 
 class SummaryClaim(BaseModel):

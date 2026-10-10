@@ -47,6 +47,8 @@ def draft_section(section_id: str, events: list[ClinicalEvent], spans: dict[str,
              f"spans: {', '.join(r.span_id for r in e.evidence)}" for e in events]
     lines += [f"{r.conflict_id} | RESOLVED (clinician-provided) | {r.text} | spans: {', '.join(q.span_id for q in r.quotes)}"
               for r in resolutions]
+    if not lines and next(s["optional"] for s in TEMPLATE if s["section_id"] == section_id):  # nothing routed: no call
+        return {"documented": False, "claims": [], "warnings": []}
     scope = (f"Problem: {problem}\nClaims cover only this problem and only events that changed the course of the stay, in chronological order.\n"
              if problem else "")
     messages = [{"role": "system", "content": SYSTEM},

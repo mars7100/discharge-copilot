@@ -2,7 +2,7 @@
 from pydantic import BaseModel
 
 from core import llm
-from core.models import ClinicalEvent, Document, SourceSpan
+from core.models import TEMPLATE, ClinicalEvent, Document, SourceSpan
 from core.validate import check_events
 
 SYSTEM = """You extract clinical events from synthetic hospital notes.
@@ -12,7 +12,9 @@ SYSTEM = """You extract clinical events from synthetic hospital notes.
 - date_or_hospital_day: use the note's documented date/hospital day, e.g. "2026-03-04 (Hospital Day 3)".
 - One documented fact per event; never combine unrelated facts in one event.
 - For each hospital day, include vital-sign status and medication status when documented.
-- Set problem to the clinical problem the event belongs to, as named in the note (e.g. "community-acquired pneumonia"), free text; null if the note names none."""
+- Set problem to the clinical problem the event belongs to, as named in the note (e.g. "community-acquired pneumonia"), free text; null if the note names none.
+- Set sections to every section below that the event belongs in; [] when it belongs only in the hospital course (the catch-all, always covered by problem). Sections:
+""" + "\n".join(f"  {s['section_id']}: {s['purpose']}" for s in TEMPLATE if s["section_id"] != "hospital_course")
 TIMEOUT = 35  # one call per note
 
 

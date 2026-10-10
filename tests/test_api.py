@@ -14,7 +14,7 @@ from core.export import marker
 from core.extract import ExtractionResult
 from core.ingest import ingest_dir
 from core.models import ClinicalEvent, EvidenceRef
-from tests.section_stub import IDS, SECTION_EVENTS, collapse, dedupe_result, kind, normalization, section_of, section_result
+from tests.section_stub import EVERY_SECTION, IDS, SECTION_EVENTS, collapse, dedupe_result, kind, normalization, section_of, section_result
 
 ROOT = Path(__file__).parent.parent
 SPAN_LINE = re.compile(r"^\[(\S+)\] (.+)$", re.M)  # "[span_id] text" lines of the extraction prompt
@@ -27,7 +27,8 @@ def fake_parse(schema, messages, timeout):
         sid, text = SPAN_LINE.findall(user)[1]
         return ExtractionResult(events=[ClinicalEvent(
             event_id="x", date_or_hospital_day="Hospital Day 1", category="presentation", statement=text,
-            evidence=[EvidenceRef(span_id=sid, quote=text)], problem="Pneumonia")])
+            evidence=[EvidenceRef(span_id=sid, quote=text)], problem="Pneumonia",
+            sections=EVERY_SECTION)])  # ticket 12: routed to every section, as before
     if kind(schema) == "dedupe":  # ticket 10: nothing to drop
         return dedupe_result(schema)
     if kind(schema) == "normalize":  # ticket 09: the one label maps onto itself

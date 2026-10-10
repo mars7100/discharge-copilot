@@ -21,7 +21,7 @@ from core.extract import ExtractionResult
 from core.ingest import ingest_dir
 from core.load_graph import load_graph
 from core.models import ClinicalEvent, Discrepancy, Draft, EvidenceRef, SummaryClaim
-from tests.section_stub import IDS, collapse, dedupe_result, kind, normalization, section_of, section_result
+from tests.section_stub import EVERY_SECTION, IDS, collapse, dedupe_result, kind, normalization, section_of, section_result
 from tests.test_api import ROOT, client, create, state  # noqa: F401  (client is a fixture)
 from tests.test_api_ticket04 import OPERATIONS, approve, asked, call  # noqa: F401  (asked is a fixture)
 from tests.test_ticket06_parallel_load import conflict_result
@@ -41,7 +41,8 @@ DOCS, SPANS, _ = ingest_dir(ROOT / "fixtures" / "case_001")
 
 def ev(statement, *refs):
     return ClinicalEvent(event_id="x", date_or_hospital_day="Hospital Day 3", category="treatment_documented",
-                         statement=statement, evidence=[{"span_id": s, "quote": q} for s, q in refs])
+                         statement=statement, evidence=[{"span_id": s, "quote": q} for s, q in refs],
+                         sections=EVERY_SECTION)  # ticket 12: routed to every section, as before
 
 
 def plain_span(doc, exclude=()):
@@ -450,7 +451,8 @@ def test_export_without_resolutions_says_none():
 def test_case_001_pauses_on_medication_a_and_drafts_the_clarification(case_copy):
     name, payload = case_copy.load_sse[-1]
     assert name == "conflicts_found"
-    assert [({q["span_id"] for q in c["quotes"]}) for c in payload["conflicts"]] == [QUOTE_SPANS]
+    # one conflict citing both sources; the model may also quote another passage documenting a conflicting value
+    assert len(payload["conflicts"]) == 1 and QUOTE_SPANS <= {q["span_id"] for q in payload["conflicts"][0]["quotes"]}
     assert "Medication A" in payload["conflicts"][0]["description"]
     carried = [c for c in case_copy.draft.claims if "D01" in c.clinician_clarification_ids]
     assert carried, case_copy.draft.claims

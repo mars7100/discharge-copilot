@@ -14,6 +14,9 @@ Ticket 09 additions (test-imposed; the 09 contract leaves the schema name and pr
 
 Ticket 10 additions: the dedupe call is recognized by a schema with a `drop_claim_ids` field (contract seam). Stubs answer
 it with dedupe_result (default: an empty drop list), built with model_construct so unknown IDs reach the code.
+
+Ticket 12: extraction tags each event with the sections other than hospital_course it belongs in. Earlier stubs, which
+assumed every section sees every event, tag their events with EVERY_SECTION so their assertions still hold.
 """
 import re
 from typing import get_origin
@@ -26,6 +29,7 @@ from core.models import TEMPLATE, ConflictItem
 IDS = [s["section_id"] for s in TEMPLATE]
 OPTIONAL = {s["section_id"] for s in TEMPLATE if s["optional"]}
 SECTION_EVENTS = ("section_drafted", "section_omitted")
+EVERY_SECTION = [s for s in IDS if s != "hospital_course"]  # ticket 12 routing tags: the event reaches every section
 
 
 def kind(schema) -> str:

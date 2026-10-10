@@ -17,7 +17,7 @@ from core.export import to_markdown
 from core.extract import ExtractionResult
 from core.load_graph import load_graph
 from core.models import ClinicalEvent, Draft, SummaryClaim
-from tests.section_stub import IDS, SECTION_EVENTS, dedupe_result, kind, normalization, problem_of, section_of, section_result
+from tests.section_stub import EVERY_SECTION, IDS, SECTION_EVENTS, dedupe_result, kind, normalization, problem_of, section_of, section_result
 from tests.test_api import client, create, state  # noqa: F401  (client is a fixture)
 from tests.test_api_ticket04 import approve
 from tests.test_ticket06_parallel_load import conflict_result
@@ -31,7 +31,8 @@ OTHER_SECTIONS = [s for s in IDS if s != HC]
 
 def ev(statement, problem, *refs):
     return ClinicalEvent(event_id="x", date_or_hospital_day="Hospital Day 2", category="treatment_documented",
-                         statement=statement, problem=problem, evidence=[{"span_id": s, "quote": q} for s, q in refs])
+                         statement=statement, problem=problem, evidence=[{"span_id": s, "quote": q} for s, q in refs],
+                         sections=EVERY_SECTION)  # ticket 12: routed to every section, as before
 
 
 def plain(doc):

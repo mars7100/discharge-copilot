@@ -34,10 +34,14 @@ def case001():
     import core.llm
     real, dedupe_calls = core.llm.parse, []
 
+    dedupe_seconds = []
+
     def spy(schema, messages, timeout):  # ticket 10: keeps each real dedupe call's schema and output
+        t = time.monotonic()
         out = real(schema, messages, timeout)
         if "drop_claim_ids" in schema.model_fields:
             dedupe_calls.append((schema, out))
+            dedupe_seconds.append(time.monotonic() - t)  # ticket 12: dedupe call time
         return out
     with pytest.MonkeyPatch.context() as mp:
         mp.chdir(ROOT)
@@ -47,13 +51,14 @@ def case001():
         t0 = time.monotonic()
         with client.stream("POST", f"/api/sessions/{sid}/load") as r:
             load_sse = _sse(r)
-        resume_sse = []
+        resume_sse, t_resume = [], time.monotonic()
         if load_sse[-1][0] == "conflicts_found":
             body = {"resolutions": [{"conflict_id": c["conflict_id"], "chosen_span_id": None, "clarification": CLARIFICATION}
                                     for c in load_sse[-1][1]["conflicts"]]}
             with client.stream("POST", f"/api/sessions/{sid}/resolutions", json=body) as r:
                 resume_sse = _sse(r)
         seconds = time.monotonic() - t0
+        resume_seconds = time.monotonic() - t_resume  # ticket 12: resume to done (0 when the load never paused)
     sse = load_sse + resume_sse
     print(f"\ncase_001 load wall time: {seconds:.1f} s")
     assert sse[-1][0] == "done", sse[-1]
@@ -62,7 +67,7 @@ def case001():
                            extract_warnings=last["extraction_done"]["warnings"], draft=s["draft"],
                            summary_warnings=last["draft"]["warnings"], sse=sse, load_sse=load_sse,
                            conflicts=s["conflicts"], resolutions=s["resolutions"], load_seconds=seconds,
-                           dedupe_calls=dedupe_calls)
+                           dedupe_calls=dedupe_calls, dedupe_seconds=dedupe_seconds, resume_seconds=resume_seconds)
 
 
 @pytest.fixture

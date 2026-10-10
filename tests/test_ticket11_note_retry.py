@@ -24,7 +24,7 @@ import core.load_graph
 from core import llm
 from core.extract import ExtractionResult
 from core.models import ClinicalEvent
-from tests.section_stub import IDS, SECTION_EVENTS, dedupe_result, kind, normalization, problem_of, section_of, section_result
+from tests.section_stub import EVERY_SECTION, IDS, SECTION_EVENTS, dedupe_result, kind, normalization, problem_of, section_of, section_result
 from tests.test_api import client, create, state  # noqa: F401  (client is a fixture)
 from tests.test_api_ticket04 import OPERATIONS, approve, call
 from tests.test_ticket06_parallel_load import conflict_result
@@ -42,7 +42,8 @@ def ev(doc, k, label, ref=None):
     s = plain_span(doc)
     span, quote = ref or (s.span_id, s.text)
     return ClinicalEvent(event_id="x", date_or_hospital_day="Hospital Day 2", category="other", statement=f"{doc} fact {k}",
-                         problem=label, evidence=[{"span_id": span, "quote": quote}])
+                         problem=label, evidence=[{"span_id": span, "quote": quote}],
+                         sections=EVERY_SECTION)  # ticket 12: routed to every section, as before
 
 
 def events():

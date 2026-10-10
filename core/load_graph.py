@@ -114,12 +114,26 @@ def overlaps(e: ClinicalEvent, conflicts: list[ConflictItem]) -> bool:
                for r in e.evidence for c in conflicts for q in c.quotes)
 
 
+def routed(state: LoadState, section_id: str) -> tuple[list[ClinicalEvent], list[Resolution]]:
+    """A section other than hospital_course: its tagged non-conflicting events, and the resolutions whose raw conflicting events are tagged for it.
+    A required section with no tagged events falls back to every non-conflicting event and every resolution."""
+    conflicts = {c.conflict_id: c for c in state["conflicts"]}
+    events = [e for e in state["events"] if not overlaps(e, state["conflicts"])]  # drafting never sees raw conflicting events
+    tagged = [e for e in events if section_id in e.sections]
+    if not tagged and not next(t["optional"] for t in core.models.TEMPLATE if t["section_id"] == section_id):
+        return events, state["resolutions"]
+    return tagged, [r for r in state["resolutions"] if any(section_id in e.sections and overlaps(e, [conflicts[r.conflict_id]]) for e in state["events"])]
+
+
 def fan_out_sections(state: LoadState, only: list[list] | None = None) -> list:
     """only: the [section_id, problem] groups to draft (None: all)."""
-    events = [e for e in state["events"] if not overlaps(e, state["conflicts"])]  # drafting never sees raw conflicting events
+    events = [e for e in state["events"] if not overlaps(e, state["conflicts"])]
     common = {"spans": state["spans"], "problem": None}
-    sends = [Send("draft_section", {**common, "section_id": t["section_id"], "events": events, "resolutions": state["resolutions"]})
-             for t in core.models.TEMPLATE if t["section_id"] != HC and (only is None or [t["section_id"], None] in only)]
+    sends = []
+    for t in core.models.TEMPLATE:
+        if t["section_id"] != HC and (only is None or [t["section_id"], None] in only):
+            evs, res = routed(state, t["section_id"])
+            sends.append(Send("draft_section", {**common, "section_id": t["section_id"], "events": evs, "resolutions": res}))
     for p in state["problems"]:  # one hospital_course call per problem that has events or resolutions
         evs = [e for e in events if e.problem == p]
         res = [r for r in state["resolutions"] if state["conflict_problem"][r.conflict_id] == p]
@@ -172,11 +186,13 @@ def redraft_plan(state: LoadState) -> dict:
     new, _, _, warnings = core.problems.normalize(new, [], [p for p in state["problems"] if p != core.problems.OTHER])
     events = sorted(state["events"] + new, key=lambda e: (pos[spans[e.evidence[0].span_id].document_id], min(spans[r.span_id].order for r in e.evidence)))
     events = [e.model_copy(update={"event_id": f"E{i:02d}"}) for i, e in enumerate(events, 1)]  # same order as merge: document, then passage
+    sig = lambda st, sid: sorted((e.statement, [r.span_id for r in e.evidence]) for e in routed(st, sid)[0])  # content, not IDs
+    after = {**state, "events": events}
     fresh = [e for e in new if not overlaps(e, state["conflicts"])]
     miss = [r["document_id"] for r in retries if "detail" in r]
     out = {"events": events, "problems": core.problems.problem_order(events, state["conflict_problem"]), "missing_notes": miss,
            "extract_warnings": state["extract_warnings"] + [w for r in retries for w in r.get("warnings", [])] + warnings,
-           "affected": [[t["section_id"], None] for t in core.models.TEMPLATE if t["section_id"] != HC] * bool(fresh)
+           "affected": [[t["section_id"], None] for t in core.models.TEMPLATE if t["section_id"] != HC and sig(state, t["section_id"]) != sig(after, t["section_id"])]
                        + [[HC, p] for p in dict.fromkeys(e.problem for e in fresh)]}
     if not fresh and miss:  # nothing to redraft: the same draft, with the missing-note warnings
         out |= {"draft": state["draft"], "draft_warnings": state["draft_warnings"] + [missing(d) for d in miss]}

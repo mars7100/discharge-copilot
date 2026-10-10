@@ -1,23 +1,21 @@
 """Discharge Copilot — Streamlit UI (spec §10). Run: .venv/bin/streamlit run app.py"""
-import os
+import uuid
 from datetime import datetime
 from pathlib import Path
 
 import streamlit as st
 
-os.environ.setdefault("LLM_MODE", "replay")  # recorded LLM output: instant, offline, reproducible
-
-from core.export import NOT_DOCUMENTED, SECTIONS, marker, to_markdown  # noqa: E402
-from core.extract import extract_events  # noqa: E402
-from core.ingest import ingest_dir  # noqa: E402
-from core.review_graph import ask  # noqa: E402
-from core.revise import accept, propose  # noqa: E402
-from core.summarize import generate_draft  # noqa: E402
+from core.export import NOT_DOCUMENTED, SECTIONS, marker, to_markdown
+from core.extract import extract_events
+from core.ingest import ingest_dir
+from core.review_graph import ask
+from core.revise import accept, propose
+from core.summarize import generate_draft
 
 CASE_DIR = Path(__file__).parent / "fixtures" / "case_001"
 ss = st.session_state
 APP_KEYS = ("documents", "spans", "ingest_warnings", "events", "extract_warnings", "draft", "summary_warnings",
-            "revisions", "clarifications", "pending", "chat", "error")
+            "revisions", "clarifications", "pending", "chat", "thread_id", "error")
 
 st.set_page_config(page_title="Discharge Copilot", layout="wide")
 st.title("Discharge Copilot")
@@ -28,6 +26,7 @@ def load_case():
     ss.pop("error", None)  # overwrite app keys only; clearing widget state inside a callback drops clicks
     ss.documents, ss.spans, ss.ingest_warnings = ingest_dir(CASE_DIR)
     ss.revisions, ss.clarifications, ss.pending, ss.chat = [], [], None, []
+    ss.thread_id = uuid.uuid4().hex  # new conversation memory in the review graph
     try:
         ss.events, ss.extract_warnings = extract_events(ss.documents, ss.spans)
         ss.draft, ss.summary_warnings = generate_draft(ss.events, ss.spans)
@@ -57,7 +56,6 @@ def resolve(accepted: bool):
 with st.sidebar:
     st.button("Load sample case", on_click=load_case, type="primary")
     st.button("Reset session", on_click=lambda: [ss.pop(k) for k in APP_KEYS if k in ss])
-    st.caption(f"LLM mode: {os.environ['LLM_MODE']}")
 
 if "documents" not in ss:
     st.info("Status: Not loaded. Use **Load sample case** in the sidebar.")
@@ -124,20 +122,26 @@ with t_rev:
         st.caption(f"{rev.revision_id} → {rev.target_claim_id}: {rev.status}")
 
 with t_ask:
-    question = st.text_input("Ask about the notes")
-    if st.button("Ask") and question.strip():
-        try:
-            res = ask(question, ss.draft, ss.spans, ss.events)
-            ss.chat.append((question, res["intent"], res["answer"], res["cited"]))
-        except Exception as e:
-            st.error(f"Question failed: {e}")
-    for i, (q, _intent, ans, cited) in reversed(list(enumerate(ss.chat))):
-        with st.container(border=True):
-            st.markdown(f"**{q}**")
-            st.markdown(ans)
-            if cited:
-                st.caption("What the notes state")
-                source_popovers(cited, key=f"qa{i}")
+    history = st.container()  # messages above, input below
+    question = st.chat_input("Ask about the notes")
+    with history:
+        for i, (q, _intent, ans, cited) in enumerate(ss.chat):
+            st.chat_message("user").markdown(q)
+            with st.chat_message("assistant"):
+                st.markdown(ans)
+                if cited:
+                    st.caption("What the notes state")
+                    source_popovers(cited, key=f"qa{i}")
+        if question and question.strip():
+            st.chat_message("user").markdown(question)
+            with st.chat_message("assistant"):
+                try:
+                    with st.spinner("Reading the notes…"):
+                        res = ask(question, ss.draft, ss.spans, ss.events, thread_id=ss.thread_id)
+                    ss.chat.append((question, res["intent"], res["answer"], res["cited"]))
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"Question failed: {e}")
 
 with t_src:
     for doc in ss.documents:

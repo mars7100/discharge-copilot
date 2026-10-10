@@ -1,0 +1,21 @@
+SYNTHETIC DATA — FICTIONAL PATIENT — NOT FOR CLINICAL USE
+NOTE_ID: note_13
+CASE: case_003 (Synthetic Patient 003)
+DATE: 2026-04-12 (Hospital Day 11)
+TYPE: Daily progress note
+AUTHOR ROLE: Hospitalist (synthetic)
+
+S: 1 formed BM/24h. Eating 50% of meals. No agitation overnight.
+
+O: T 36.8 C | HR 72 AF | BP 128/76 | SpO2 96% RA
+Labs: WBC 9.8, Plt 188, Cr 1.0, K 4.1, TSH 3.2.
+
+A/P:
+1. C. diff: Resolving. Vancomycin PO day 5/10.
+2. AF: Rate controlled on metoprolol tartrate 25 mg BID. Apixaban 5 mg BID.
+3. HTN: BP 120s-130s, cont holding amlodipine.
+4. Delirium: Resolved. Plan taper off quetiapine prior to d/c.
+5. Dysphagia: SLP re-eval tomorrow.
+6. Sacral pressure injury: Healing.
+7. Dispo: SNF per PT. SW working on placement.
+Code status: DNR/DNI.

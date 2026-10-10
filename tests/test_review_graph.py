@@ -6,9 +6,8 @@ from streamlit.testing.v1 import AppTest
 
 from core import llm
 from core import review_graph as rg
-from core.extract import extract_events
-from core.ingest import ingest_dir
-from core.summarize import generate_draft
+
+pytestmark = pytest.mark.live  # uses the model; run with: pytest -m live
 
 ROOT = Path(__file__).parent.parent
 CONFLICT = ["note_04_p01_b07", "note_05_p01_b04"]
@@ -16,25 +15,20 @@ RATIONALE_Q = "What was the reason for the Medication A dose change?"
 
 
 @pytest.fixture
-def case(monkeypatch):
+def case(monkeypatch, case_copy):
     monkeypatch.chdir(ROOT)
-    monkeypatch.setenv("LLM_MODE", "replay")
-    monkeypatch.delenv("LLM_RECORD_DIR", raising=False)
-    docs, spans, _ = ingest_dir(ROOT / "fixtures" / "case_001")
-    events, _ = extract_events(docs, spans)
-    draft, _ = generate_draft(events, spans)
-    return draft, spans, events
+    return case_copy.draft, case_copy.spans, case_copy.events
 
 
 @pytest.fixture
 def stub(monkeypatch):
-    """Replaces core.llm.parse; records each call's messages and mode."""
+    """Replaces core.llm.parse; records each call's messages."""
     class Calls(list):
         span_ids = list(CONFLICT)  # what the stubbed model cites; tests may override
     calls = Calls()
 
-    def fake(schema, messages, mode=None):
-        calls.append({"messages": messages, "mode": mode})
+    def fake(schema, messages):
+        calls.append({"messages": messages})
         return rg.Answer(answer="x", span_ids=calls.span_ids)
 
     monkeypatch.setattr(llm, "parse", fake)
@@ -92,21 +86,6 @@ def test_question_sends_all_passages(case, stub):  # no keyword retrieval: synon
     assert out["retrieved"] == list(spans) and len(stub) == 1
 
 
-def test_missing_recording_falls_back_to_live(case, monkeypatch):
-    draft, spans, events = case
-    modes = []
-
-    def fake(schema, messages, mode=None):
-        modes.append(mode)
-        if mode != "live":
-            raise FileNotFoundError("no recording")
-        return rg.Answer(answer="answered", span_ids=["note_04_p01_b07"])
-
-    monkeypatch.setattr(llm, "parse", fake)
-    out = rg.ask("What does [N04:B07] say?", draft, spans, events)
-    assert out["answer"] == "answered" and modes[-1] == "live" and len(modes) == 2
-
-
 def test_ask_does_not_mutate_draft(case, stub):
     draft, spans, events = case
     before = draft.model_dump()
@@ -115,9 +94,8 @@ def test_ask_does_not_mutate_draft(case, stub):
     assert draft.model_dump() == before
 
 
-def test_rationale_replay(case, monkeypatch):  # T05: needs a committed replay recording
+def test_rationale_live(case):  # T05
     draft, spans, events = case
-    monkeypatch.setattr(llm, "_call", lambda *a, **k: pytest.fail("no replay recording for the rationale question"))
     out = rg.ask(RATIONALE_Q, draft, spans, events)
     assert rg.NOT_ESTABLISHED in out["answer"]
     assert set(out["cited"]) <= set(out["retrieved"])
@@ -126,15 +104,9 @@ def test_rationale_replay(case, monkeypatch):  # T05: needs a committed replay r
 
 def test_app_ask_read_section(monkeypatch):
     monkeypatch.chdir(ROOT)
-    monkeypatch.setenv("LLM_MODE", "replay")
     at = AppTest.from_file(str(ROOT / "app.py"), default_timeout=30).run()
     at.sidebar.button[0].click().run()  # Load sample case
-    boxes = [t for t in at.text_input if t.label == "Ask about the notes"]
-    assert boxes, "no text_input labelled 'Ask about the notes'"
-    boxes[0].set_value("Read the condition at discharge")
-    asks = [b for b in at.button if b.label == "Ask"]
-    assert asks, "no button labelled 'Ask'"
-    asks[0].click().run()
+    app_ask(at, "Read the condition at discharge")
     claim = next(c for c in at.session_state["draft"].claims if c.section == "condition_at_discharge")
     assert not at.exception and any(claim.text in m.value for m in at.markdown)
 
@@ -155,15 +127,13 @@ def system_msg(call):
 
 def app_loaded(monkeypatch):
     monkeypatch.chdir(ROOT)
-    monkeypatch.setenv("LLM_MODE", "replay")
     at = AppTest.from_file(str(ROOT / "app.py"), default_timeout=30).run()
     at.sidebar.button[0].click().run()  # Load sample case
     return at
 
 
 def app_ask(at, question):
-    next(t for t in at.text_input if t.label == "Ask about the notes").set_value(question)
-    next(b for b in at.button if b.label == "Ask").click().run()
+    next(c for c in at.chat_input if c.placeholder == "Ask about the notes").set_value(question).run()
     return at
 
 
@@ -201,7 +171,7 @@ def test_app_chat_history_stores_only_display_data(monkeypatch):
 def test_app_no_duplicate_ask_heading(monkeypatch):
     at = app_loaded(monkeypatch)
     assert not any(m.value == "### Ask about the notes" for m in at.markdown)
-    assert any(t.label == "Ask about the notes" for t in at.text_input)
+    assert any(c.placeholder == "Ask about the notes" for c in at.chat_input)
 
 
 def test_conflict_prompt_flags_discrepancy(case, stub):
@@ -218,17 +188,15 @@ def test_oxygen_question_still_retrieves(case, stub):
     assert "note_04_p01_b09" in rg.ask(OXYGEN_Q, draft, spans, events)["retrieved"]
 
 
-def test_rationale_replay_cites_conflict(case, monkeypatch):  # RED until re-recorded
+def test_rationale_live_cites_conflict(case):
     draft, spans, events = case
-    monkeypatch.setattr(llm, "_call", lambda *a, **k: pytest.fail("no replay recording for the rationale question"))
     out = rg.ask(RATIONALE_Q, draft, spans, events)
     assert set(CONFLICT) <= set(out["cited"])
 
 
 @pytest.mark.parametrize("question", ["Why do the notes mention different doses?", RATIONALE_Q])
-def test_conflict_answers_attribute_flag_to_app_and_hide_ids(case, monkeypatch, question):  # review M1 + opt 1
+def test_conflict_answers_attribute_flag_to_app_and_hide_ids(case, question):  # review M1 + opt 1
     draft, spans, events = case
-    monkeypatch.setattr(llm, "_call", lambda *a, **k: pytest.fail("no replay recording"))
     out = rg.ask(question, draft, spans, events)
     assert set(CONFLICT) <= set(out["cited"])
     assert "notes flag" not in out["answer"].lower()
@@ -239,3 +207,44 @@ def test_passages_carry_note_dates(case, stub):  # review opt 2
     draft, spans, events = case
     rg.ask(RATIONALE_Q, draft, spans, events)
     assert "(note dated 2026-03-04 (Hospital Day 3))" in user_msg(stub[0])
+
+
+def test_first_question_sends_no_history(case, stub):
+    draft, spans, events = case
+    rg.ask("Why do the notes mention different doses?", draft, spans, events, thread_id="t-first")
+    assert [m["role"] for m in stub[0]["messages"]] == ["system", "user"]
+
+
+def test_follow_up_sends_last_three_turns(case, stub):
+    draft, spans, events = case
+    qs = ["What was given on day 1?", "Read the condition at discharge", "What about day 2?",
+          "And day 3?", "And day 4?"]
+    for q in qs:
+        rg.ask(q, draft, spans, events, thread_id="t-hist")
+    last = stub[-1]["messages"]  # 4 LLM calls; read_section has none but is still a turn
+    users = [m["content"] for m in last if m["role"] == "user"]
+    assert users[:-1] == qs[1:4] and qs[4] in users[-1]  # turns 2-4 (incl. read section), then the new question
+    assert "Earlier answers are not evidence" in last[1]["content"]
+    rg.ask("What was given on day 1?", draft, spans, events, thread_id="t-other")
+    assert [m["role"] for m in stub[-1]["messages"]] == ["system", "user"]  # threads don't share history
+
+
+def test_app_follow_up_carries_history_and_reload_resets_it(monkeypatch):
+    at = app_loaded(monkeypatch)
+    stub, real = [], llm.parse
+
+    def fake(schema, messages):  # questions only
+        if schema is not rg.Answer:
+            return real(schema, messages)
+        stub.append({"messages": messages})
+        return rg.Answer(answer="x", span_ids=CONFLICT)
+
+    monkeypatch.setattr(llm, "parse", fake)
+    app_ask(at, "Read the condition at discharge")
+    app_ask(at, "What changed on day 3?")
+    assert not at.exception, at.exception
+    roles = [m["role"] for m in stub[-1]["messages"]]
+    assert roles == ["system", "system", "user", "assistant", "user"]
+    at.sidebar.button[0].click().run()  # Load sample case again: new conversation
+    app_ask(at, "What changed on day 3?")
+    assert [m["role"] for m in stub[-1]["messages"]] == ["system", "user"]

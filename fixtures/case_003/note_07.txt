@@ -1,0 +1,14 @@
+SYNTHETIC DATA — FICTIONAL PATIENT — NOT FOR CLINICAL USE
+NOTE_ID: note_07
+CASE: case_003 (Synthetic Patient 003)
+DATE: 2026-04-06 (Hospital Day 5)
+TYPE: Speech-language pathology evaluation
+AUTHOR ROLE: Speech-language pathologist (synthetic)
+
+Reason for referral: Coughing w/ thin liquids.
+
+Bedside swallow eval: Oral motor exam w/ mild generalized weakness. Delayed swallow initiation. Immediate cough w/ thin liquids x 3/3 trials. No s/s aspiration w/ nectar-thick liquids or minced/moist solids.
+
+Impression: Mild-moderate oropharyngeal dysphagia, likely deconditioning post-critical illness.
+
+Recommendations: Diet: IDDSI Level 5 minced & moist solids, IDDSI Level 2 mildly thick (nectar-thick) liquids. Meds crushed in puree. Upright 90 degrees for all PO and 30 min after. Will follow for diet advancement; consider MBSS if no improvement.

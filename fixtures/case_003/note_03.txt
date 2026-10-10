@@ -1,0 +1,26 @@
+SYNTHETIC DATA — FICTIONAL PATIENT — NOT FOR CLINICAL USE
+NOTE_ID: note_03
+CASE: case_003 (Synthetic Patient 003)
+DATE: 2026-04-03 (Hospital Day 2)
+TYPE: ICU progress note
+AUTHOR ROLE: ICU fellow (synthetic)
+
+S: Overnight remained on norepi, mitts applied for delirium. No intubation.
+
+O: Tmax 38.6 C | HR 102 AF | MAP 66 on norepi 0.05 | RR 26 | SpO2 94% HFNC 40 L/50%
+I/O: +3.2 L since admit. UOP improving, 900 mL/24h.
+
+Labs: WBC 18.9, Plt 74, Cr 2.3, lactate 2.4.
+
+Micro: MRSA nares PCR negative. Pneumococcal urine Ag positive. Legionella Ag negative. BCx NGTD.
+
+A/P: 78F septic shock 2/2 pneumococcal RLL CAP, improving hemodynamics.
+
+1. Septic shock: Wean norepi. Lactate clearing.
+2. CAP: MRSA nares neg -> d/c vancomycin IV. Cont ceftriaxone 2 g daily. Azithromycin to complete 3 days.
+3. AHRF: Wean HFNC.
+4. AKI: Cr 2.3, peaking. Avoid nephrotoxins.
+5. AF: Rate 100s on pressor. Hold metoprolol, hold apixaban.
+6. Thrombocytopenia: Plt 74. Trend.
+7. Delirium: CAM+. Reorientation, sleep hygiene, minimize restraints.
+Code status: Full code.

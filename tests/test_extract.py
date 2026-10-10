@@ -1,14 +1,11 @@
 import json
-from pathlib import Path
 
 import pytest
 
 from core import llm
 from core.extract import ExtractionError, ExtractionResult, extract_events
-from core.ingest import ingest_dir
 from core.models import ClinicalEvent, Document, SourceSpan
 
-ROOT = Path(__file__).parent.parent
 DOCS = [Document(document_id="note_01", filename="note_01.txt", date="2026-03-02", hospital_day=1,
                  type="Admission note", author_role=None)]
 SPANS = {sid: SourceSpan(span_id=sid, document_id="note_01", filename="note_01.txt", page=1, order=i, text=t)
@@ -75,12 +72,9 @@ def test_exception_retried_once_then_extraction_error(monkeypatch):
     assert len(calls) == 2
 
 
-def test_case_001_replay(monkeypatch):
-    monkeypatch.chdir(ROOT)
-    monkeypatch.setenv("LLM_MODE", "replay")
-    monkeypatch.delenv("LLM_RECORD_DIR", raising=False)
-    docs, spans, _ = ingest_dir(ROOT / "fixtures" / "case_001")
-    events, warnings = extract_events(docs, spans)
+@pytest.mark.live
+def test_case_001_live(case_copy):
+    events, warnings = case_copy.events, case_copy.extract_warnings
     assert not any("retry failed" in w for w in warnings), warnings  # e.g. missing retry recording
     assert len(events) >= 3
     assert len({e.date_or_hospital_day for e in events}) >= 3

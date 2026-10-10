@@ -1,0 +1,24 @@
+SYNTHETIC DATA — FICTIONAL PATIENT — NOT FOR CLINICAL USE
+NOTE_ID: note_06
+CASE: case_002 (Synthetic Patient 002)
+DATE: 2026-03-13 (Hospital Day 4)
+TYPE: Discharge day progress note
+AUTHOR ROLE: Ward resident (synthetic)
+
+S: Pt feels well, ready to go home. Able to lie flat. Walked halls w/o difficulty.
+
+O: T 36.7 C | HR 76 | BP 124/72 | RR 16 | SpO2 96% RA | Wt 90.4 kg
+
+Exam: No JVD. Lungs clear bilaterally. Trace BLE edema.
+
+Labs: Na 138, K 4.0, BUN 28, Cr 1.2, Glu 142.
+
+A/P: 72M w/ acute on chronic HFrEF exacerbation, now euvolemic. Medically stable for discharge home today.
+
+1. HFrEF: Transition to PO furosemide. Resume spironolactone 25 mg daily. Cont metoprolol succinate. TTE not yet resulted, f/u as outpatient.
+2. AKI on CKD 3a: Resolved, Cr 1.2 at baseline.
+3. T2DM: Resume metformin 1000 mg BID.
+4. HTN: Controlled.
+
+Follow-up: Cardiology clinic. BMP in 1 week.
+Discharge diet: 2 g Na, 1.5 L fluid restriction.

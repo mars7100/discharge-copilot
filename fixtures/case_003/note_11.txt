@@ -1,0 +1,21 @@
+SYNTHETIC DATA — FICTIONAL PATIENT — NOT FOR CLINICAL USE
+NOTE_ID: note_11
+CASE: case_003 (Synthetic Patient 003)
+DATE: 2026-04-10 (Hospital Day 9)
+TYPE: Daily progress note
+AUTHOR ROLE: Hospitalist (synthetic)
+
+S: Stools decreasing, 2 loose BMs/24h. Calmer overnight on quetiapine. Family meeting held this afternoon.
+
+O: T 37.2 C | HR 80 AF | BP 136/80 | SpO2 95% RA
+Labs: WBC 12.4, Plt 156, Cr 1.1.
+
+Family meeting: Attended by pt (intermittently participating), daughter (HCP), son by phone, hospitalist, RN, SW. Discussed ICU course and risk of recurrent critical illness. Daughter and son state pt previously expressed she would not want CPR or intubation. Pt nodded agreement when asked. Code status changed to DNR/DNI. Okay for ICU transfer, pressors, NIV. POLST to be completed before discharge.
+
+A/P:
+1. C. diff: Improving. Vancomycin 125 mg PO q6h, day 3/10.
+2. AF: Apixaban 5 mg BID. Metoprolol tartrate increased to 25 mg BID for HR 90s.
+3. Delirium: Quetiapine 25 mg qHS.
+4. Dysphagia: SLP following.
+5. Deconditioning: PT/OT eval.
+Code status: DNR/DNI.

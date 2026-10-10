@@ -1,0 +1,19 @@
+SYNTHETIC DATA — FICTIONAL PATIENT — NOT FOR CLINICAL USE
+NOTE_ID: note_10
+CASE: case_003 (Synthetic Patient 003)
+DATE: 2026-04-09 (Hospital Day 8)
+TYPE: Infectious disease consult
+AUTHOR ROLE: ID fellow (synthetic)
+
+Reason for consult: C. difficile infection in setting of recent pneumococcal sepsis.
+
+Data: Stool C. diff PCR positive, toxin EIA positive. WBC 17.1. Cr 1.3. No ileus. Afebrile x 12h.
+
+Assessment: Initial episode C. difficile infection, severe by IDSA criteria (WBC 17.1 > 15). Pneumococcal CAP adequately treated w/ 7 days ceftriaxone.
+
+Recommendations:
+1. Vancomycin 125 mg PO q6h x 10 days (day 1 = 4/8, last day 4/17). Fidaxomicin reasonable alternative if covered.
+2. No further antibiotics for CAP.
+3. Avoid PPIs; pt not currently on one.
+4. Avoid antimotility agents.
+5. ID will sign off; call w/ questions.

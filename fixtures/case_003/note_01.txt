@@ -1,0 +1,43 @@
+SYNTHETIC DATA — FICTIONAL PATIENT — NOT FOR CLINICAL USE
+NOTE_ID: note_01
+CASE: case_003 (Synthetic Patient 003)
+DATE: 2026-04-02 (Hospital Day 1)
+TYPE: ICU admission H&P
+AUTHOR ROLE: ICU attending (synthetic)
+
+CC: Fever, cough, confusion x 2 days.
+
+HPI: 78 y/o F w/ paroxysmal AF on apixaban, HTN, hypothyroidism, mild cognitive impairment, brought in by daughter for 2 days productive cough, fever to 39.2 C and new confusion. In ED hypotensive to 78/40, lactate 4.6. Received 30 mL/kg LR and ceftriaxone + azithromycin. MAP remained < 65, norepinephrine started via R IJ CVC. Admitted to MICU for septic shock.
+
+PMH: Paroxysmal AF (CHA2DS2-VASc 5), HTN, hypothyroidism, MCI, OA bilateral knees.
+
+Home meds: Apixaban 5 mg PO BID. Metoprolol succinate 50 mg PO daily. Amlodipine 5 mg PO daily. Levothyroxine 75 mcg PO daily. Donepezil 10 mg PO qHS. Acetaminophen 650 mg PO q6h PRN.
+
+Allergies: Penicillin (hives, remote).
+
+Social: Widowed, lives alone in 2-story house, daughter checks in daily. Ambulates w/o device at baseline. Never smoker.
+
+Vitals: T 39.0 C | HR 118 irregular | BP 84/46 (MAP 59) on norepi 0.08 mcg/kg/min | RR 30 | SpO2 88% RA -> 93% 6L NC
+
+Exam: Gen: lethargic, oriented to self only. CV: irregularly irregular, tachycardic. Lungs: coarse crackles R mid and lower fields, bronchial breath sounds RLL. Ext: cool, mottled knees, cap refill 4 sec.
+
+Labs: WBC 21.4, Hgb 11.8, Plt 88. Na 133, K 4.4, BUN 48, Cr 2.1 (baseline 0.9), HCO3 17, lactate 4.6. Procalcitonin 18.2. TSH pending. UA bland.
+
+Micro: BCx x2 sent. Sputum cx sent. Urine Legionella and pneumococcal Ag sent. MRSA nares PCR sent.
+
+Imaging: CT chest w/o contrast: dense RLL consolidation w/ air bronchograms, small R parapneumonic effusion. Incidental 6 mm solid nodule LUL; recommend follow-up CT per Fleischner guidelines.
+
+ECG: AF w/ RVR 118.
+
+A/P: 78F w/ septic shock 2/2 severe RLL CAP, complicated by AKI and thrombocytopenia.
+
+1. Septic shock / severe CAP: Norepi titrate to MAP > 65. Ceftriaxone 2 g IV daily + azithromycin 500 mg IV daily. Add vancomycin IV pharmacy to dose for MRSA coverage pending nares PCR. Pt tolerated ceftriaxone in ED w/o reaction.
+2. Acute hypoxemic resp failure: HFNC, goal SpO2 > 92%. Low threshold for intubation.
+3. AKI: Cr 2.1, prerenal/ATN from shock. Renally dose meds. Strict I/O.
+4. AF w/ RVR: Hold metoprolol while on pressors. Hold apixaban given Plt 88 and possible procedures.
+5. Thrombocytopenia: Likely sepsis. Trend. HIT unlikely, no heparin exposure.
+6. Encephalopathy: Likely septic. CAM-ICU q shift.
+7. Hypothyroidism: Cont levothyroxine.
+8. HTN: Hold amlodipine.
+9. VTE ppx: SCDs only given Plt.
+Code status: Full code (confirmed w/ pt's daughter, HCP).

@@ -1,0 +1,20 @@
+SYNTHETIC DATA — FICTIONAL PATIENT — NOT FOR CLINICAL USE
+NOTE_ID: note_06
+CASE: case_003 (Synthetic Patient 003)
+DATE: 2026-04-05 (Hospital Day 4)
+TYPE: ICU transfer note
+AUTHOR ROLE: ICU fellow (synthetic)
+
+Summary: 78F w/ pAF, HTN, MCI admitted 4/2 w/ septic shock 2/2 pneumococcal RLL CAP. Required norepi x 2 days, HFNC, now on 3L NC. Course c/b AKI (peak Cr 2.3), thrombocytopenia (nadir Plt 74), ICU delirium.
+
+Active issues for floor team:
+1. Pneumococcal CAP: Ceftriaxone 2 g IV daily, day 4/7. Azithromycin completed.
+2. AKI: Cr 1.6 today. Renally dose meds.
+3. AF: Metoprolol tartrate 12.5 mg BID. Apixaban on hold for thrombocytopenia, Plt 92 today; resume when Plt > 100.
+4. Delirium: Resolving.
+5. Dysphagia: Coughing w/ thin liquids; SLP consult pending. NPO except meds w/ puree.
+6. Sacral stage 1 pressure injury.
+7. Incidental 6 mm LUL nodule on CT.
+8. Goals of care: family meeting pending.
+
+Code status: Full code.

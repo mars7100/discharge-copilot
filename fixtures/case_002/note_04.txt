@@ -1,0 +1,22 @@
+SYNTHETIC DATA — FICTIONAL PATIENT — NOT FOR CLINICAL USE
+NOTE_ID: note_04
+CASE: case_002 (Synthetic Patient 002)
+DATE: 2026-03-12 (Hospital Day 3)
+TYPE: Day shift nursing note
+AUTHOR ROLE: Registered nurse (synthetic)
+
+0700: Report received. Pt A&O x4, sitting up in chair. States breathing "much better."
+
+Standing wt 0600: 91.0 kg.
+
+VS 0800: HR 82, BP 128/76, RR 18, SpO2 93% RA. O2 discontinued per order.
+
+0900 meds: Furosemide 80 mg IV given. Metoprolol succinate 50 mg PO given. Heparin 5,000 units SQ given.
+
+Resp: Fine crackles R base only. Ambulated 150 ft in hallway w/ standby assist, SpO2 91-93% RA, mild DOE.
+
+GU: UOP 1,800 mL this shift.
+
+Education: HF teaching started w/ pt and wife (daily weights, 2 g Na diet, fluid restriction, when to call MD). Pt verbalized understanding. Pt states he does not own a home scale.
+
+Sulfa allergy band remains in place.

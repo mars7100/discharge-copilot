@@ -1,0 +1,25 @@
+SYNTHETIC DATA — FICTIONAL PATIENT — NOT FOR CLINICAL USE
+NOTE_ID: note_04
+CASE: case_003 (Synthetic Patient 003)
+DATE: 2026-04-04 (Hospital Day 3)
+TYPE: ICU progress note
+AUTHOR ROLE: ICU fellow (synthetic)
+
+S: Off norepi since 0400. More alert, oriented x2.
+
+O: Tmax 37.9 C | HR 96 AF | BP 112/64 | RR 22 | SpO2 95% 4L NC
+Labs: WBC 14.2, Plt 81, Cr 1.9, lactate 1.3.
+
+Micro: Sputum cx: Streptococcus pneumoniae, PCN-susceptible, ceftriaxone-susceptible. BCx NGTD at 48h.
+
+A/P:
+1. Septic shock: Resolved, off pressors.
+2. Pneumococcal CAP: Cont ceftriaxone 2 g IV daily. Azithromycin complete today. Plan total 7 days abx.
+3. AHRF: Weaned to NC.
+4. AKI: Cr 1.9, improving.
+5. AF: Start metoprolol tartrate 12.5 mg PO BID now off pressors.
+6. Thrombocytopenia: Plt 81, uptrending. Start heparin SQ ppx when Plt > 100.
+7. Delirium: Improving.
+8. Goals of care: Daughter asked to meet; will schedule family meeting.
+Code status: Full code.
+Dispo: Transfer to floor tomorrow if stable.

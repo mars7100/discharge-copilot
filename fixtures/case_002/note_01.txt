@@ -1,0 +1,38 @@
+SYNTHETIC DATA — FICTIONAL PATIENT — NOT FOR CLINICAL USE
+NOTE_ID: note_01
+CASE: case_002 (Synthetic Patient 002)
+DATE: 2026-03-10 (Hospital Day 1)
+TYPE: Admission H&P
+AUTHOR ROLE: Admitting hospitalist (synthetic)
+
+CC: SOB, leg swelling x 5 days.
+
+HPI: 72 y/o M w/ HFrEF (EF 30% on TTE 2025), HTN, T2DM, CKD 3a, presents w/ 5 days progressive DOE, 3-pillow orthopnea, PND and BLE edema. Reports ~4 kg wt gain at home. Admits dietary indiscretion (salty food at family event) and ran out of furosemide 3 days ago. Denies CP, palpitations, syncope, fever.
+
+PMH: HFrEF, HTN, T2DM (last A1c 7.8%), CKD 3a (baseline Cr ~1.2), OSA not on CPAP.
+
+Home meds: Furosemide 40 mg PO daily. Metoprolol succinate 50 mg PO daily. Lisinopril 10 mg PO daily. Spironolactone 25 mg PO daily. Metformin 1000 mg PO BID. Atorvastatin 40 mg PO qHS.
+
+Allergies: NKDA.
+
+Social: Lives w/ wife. Former smoker, 30 pk-yr, quit 2015. Occasional EtOH. No drug use.
+
+Vitals: T 36.8 C | HR 98 | BP 152/88 | RR 24 | SpO2 89% RA -> 94% 3L NC | Wt 94.2 kg
+
+Exam: Gen: mild resp distress, speaking in short sentences. Neck: JVD to angle of jaw. CV: RRR, S3 present, no murmur. Lungs: bibasilar crackles to mid-lung fields. Abd: soft, NT. Ext: 2+ pitting edema to knees bilaterally.
+
+Labs: Na 134, K 4.1, Cl 98, HCO3 24, BUN 32, Cr 1.6 (baseline ~1.2), Glu 186. NT-proBNP 6,840. Trop hs 18 -> 19 (flat). CBC: WBC 7.2, Hgb 12.1, Plt 210.
+
+Imaging: CXR: cardiomegaly, bilateral interstitial edema, small bilateral pleural effusions. No focal consolidation.
+
+ECG: Sinus tachycardia 98, LBBB (known, unchanged from prior).
+
+A/P: 72M w/ HFrEF admitted w/ acute on chronic systolic HF exacerbation, likely precipitated by dietary indiscretion and diuretic nonadherence.
+
+1. Acute on chronic HFrEF: Furosemide 40 mg IV BID. Strict I/Os, daily standing weights, 2 g Na diet, 1.5 L fluid restriction. Repeat TTE ordered.
+2. AKI on CKD 3a: Cr 1.6 from baseline ~1.2, likely cardiorenal. Hold lisinopril and spironolactone. Trend BMP daily.
+3. Hypoxemia: O2 via NC, titrate to SpO2 > 92%.
+4. HTN: Cont metoprolol succinate 50 mg daily.
+5. T2DM: Hold metformin given AKI. Insulin sliding scale, POC glucose AC/HS.
+6. VTE ppx: Heparin 5,000 units SQ q8h.
+Code status: Full code.

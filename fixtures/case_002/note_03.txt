@@ -1,0 +1,25 @@
+SYNTHETIC DATA — FICTIONAL PATIENT — NOT FOR CLINICAL USE
+NOTE_ID: note_03
+CASE: case_002 (Synthetic Patient 002)
+DATE: 2026-03-11 (Hospital Day 2)
+TYPE: Daily progress note
+AUTHOR ROLE: Ward resident (synthetic)
+
+S: Pt reports SOB improving. Slept on 2 pillows. No CP.
+
+O: T 36.7 C | HR 88 | BP 138/80 | RR 20 | SpO2 95% 2L NC
+I/O: 900 in / 2,400 out (net -1.5 L). Wt 92.6 kg (admit 94.2).
+
+Exam: JVD to mid-neck. Crackles at bases, improved. 2+ BLE edema.
+
+Labs: Na 135, K 3.6, BUN 34, Cr 1.5, Mg 1.8. POC glucose 160-210.
+
+A/P: 72M w/ HFrEF exacerbation, diuresing well.
+
+1. Acute on chronic HFrEF: Cont furosemide 40 mg IV BID. Goal net -1 to -2 L/day. TTE pending.
+2. AKI on CKD 3a: Cr 1.5, improving. Cont holding lisinopril and spironolactone.
+3. Hypokalemia: K 3.6. KCl 40 mEq PO x1. Mg replaced.
+4. Hypoxemia: Wean O2 as tolerated.
+5. HTN: Cont metoprolol succinate 50 mg daily.
+6. T2DM: Cont SSI. Hold metformin.
+7. VTE ppx: Heparin SQ.

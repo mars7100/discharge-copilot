@@ -1,0 +1,22 @@
+SYNTHETIC DATA — FICTIONAL PATIENT — NOT FOR CLINICAL USE
+NOTE_ID: note_02
+CASE: case_002 (Synthetic Patient 002)
+DATE: 2026-03-10 (Hospital Day 1)
+TYPE: Night shift nursing note
+AUTHOR ROLE: Registered nurse (synthetic)
+
+Pt arrived to unit 2130 from ED via stretcher. A&O x4. Oriented to room and call light. Wife at bedside.
+
+Allergies verified w/ pt on admission: reports sulfa allergy (rash as a child). Allergy band applied. Provider not yet notified.
+
+VS 2200: HR 94, BP 146/84, RR 22, SpO2 95% 3L NC, T 36.9 C.
+
+Resp: Crackles bilateral bases. HOB elevated 45 degrees, pt states unable to lie flat.
+
+GU: Furosemide 40 mg IV given 2215. Voided 650 mL by 0200. Total UOP 1,100 mL this shift.
+
+Skin: BLE 2+ pitting edema. Skin intact, no breakdown noted.
+
+POC glucose 0000: 204. 2 units insulin lispro given per sliding scale.
+
+Pt slept intermittently. No acute events overnight. Standing weight to be obtained 0600.

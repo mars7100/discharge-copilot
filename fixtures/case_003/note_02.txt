@@ -1,0 +1,20 @@
+SYNTHETIC DATA — FICTIONAL PATIENT — NOT FOR CLINICAL USE
+NOTE_ID: note_02
+CASE: case_003 (Synthetic Patient 003)
+DATE: 2026-04-02 (Hospital Day 1)
+TYPE: ICU night shift nursing note
+AUTHOR ROLE: ICU registered nurse (synthetic)
+
+1900: Report received. Pt on norepi 0.10 mcg/kg/min via R IJ. HFNC 40 L/60%.
+
+Neuro: Opens eyes to voice, oriented to self. CAM-ICU positive. Mitts applied 0200 after pt pulled at HFNC; provider notified, order obtained.
+
+CV: AF 105-120. MAP 62-70. Norepi titrated up to 0.12 at 2300, down to 0.06 by 0500.
+
+Resp: SpO2 92-95% on HFNC. Weak cough, suctioned orally for thick yellow secretions.
+
+GU: Foley placed. UOP 15-25 mL/hr until 0300, then 40 mL/hr.
+
+Meds: Vancomycin 1,250 mg IV given 2100. Ceftriaxone and azithromycin given in ED.
+
+Daughter called 2200, updated on plan by MD. Daughter states pt "would not want to be on a breathing machine long term," asks to talk to the team in the morning. Message left for day team.

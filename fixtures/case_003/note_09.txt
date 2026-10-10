@@ -1,0 +1,23 @@
+SYNTHETIC DATA — FICTIONAL PATIENT — NOT FOR CLINICAL USE
+NOTE_ID: note_09
+CASE: case_003 (Synthetic Patient 003)
+DATE: 2026-04-08 (Hospital Day 7)
+TYPE: Daily progress note
+AUTHOR ROLE: Hospitalist (synthetic)
+
+S: Overnight agitation requiring quetiapine x1. This AM calm. New loose stools x 4 since yesterday afternoon, abdominal cramping.
+
+O: Tmax 38.1 C | HR 92 AF | BP 132/78 | RR 18 | SpO2 95% 1L NC
+Exam: Abd soft, mild diffuse TTP, hyperactive BS. Sacrum: stage 1, unchanged.
+Labs: WBC 15.8 (up from 10.2 yesterday), Plt 118, Cr 1.3, K 3.3.
+
+A/P: 78F recovering from pneumococcal septic shock, now w/ new diarrhea and leukocytosis on abx.
+
+1. Diarrhea / leukocytosis: Concern for C. difficile. Stool C. diff PCR + toxin sent. Contact-plus precautions. Start vancomycin 125 mg PO q6h empirically.
+2. Pneumococcal CAP: Ceftriaxone day 7/7, last dose today.
+3. AF: Plt 118. Resume apixaban 5 mg BID. Cont metoprolol tartrate 12.5 mg BID.
+4. Delirium: Recurrent sundowning. Quetiapine 25 mg qHS scheduled. Cont donepezil.
+5. Dysphagia: Per SLP, minced/moist + mildly thick liquids.
+6. Hypokalemia: KCl 40 mEq PO.
+7. AKI: Cr 1.3, improving.
+Code status: Full code.

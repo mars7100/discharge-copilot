@@ -1,0 +1,16 @@
+SYNTHETIC DATA — FICTIONAL PATIENT — NOT FOR CLINICAL USE
+NOTE_ID: note_08
+CASE: case_003 (Synthetic Patient 003)
+DATE: 2026-04-07 (Hospital Day 6)
+TYPE: Floor night shift nursing note
+AUTHOR ROLE: Registered nurse (synthetic)
+
+2300: Pt found attempting to get out of bed, pulling at PIV, stating "I need to go feed the cat." Disoriented to place and time. Redirected multiple times without success.
+
+Covering MD paged 2330. Quetiapine 25 mg PO x1 given 2350 per order. Bed alarm on, low bed, fall mat in place.
+
+0200: Pt sleeping. VS stable. HR 84 AF.
+
+0500: Pt awake, calm, oriented to self and place. Daughter notified of overnight events.
+
+Diet: Minced/moist and mildly thick liquids per SLP. Ate 25% of dinner.

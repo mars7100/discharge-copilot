@@ -1,4 +1,4 @@
-"""Compare the replayed draft for case_001 against case_001_expected.json. Run: .venv/bin/python -m scripts.coverage"""
+"""Compare the model's draft for case_001 against case_001_expected.json. Run: .venv/bin/python -m scripts.coverage"""
 import json
 import os
 from pathlib import Path
@@ -17,11 +17,13 @@ def quote_spans(evidence, spans) -> set[str]:
             if s.document_id == e["document_id"] and locate_quote(e["quote"], s.text) is not None}
 
 
-def coverage() -> dict:
+def coverage(spans=None, draft=None) -> dict:
+    """Pass spans + draft to reuse a model run; otherwise runs the pipeline."""
     expected = json.loads((ROOT / "fixtures" / "case_001_expected.json").read_text())
-    docs, spans, _ = ingest_dir(ROOT / "fixtures" / "case_001")
-    events, _ = extract_events(docs, spans)
-    draft, _ = generate_draft(events, spans)
+    if draft is None:
+        docs, spans, _ = ingest_dir(ROOT / "fixtures" / "case_001")
+        events, _ = extract_events(docs, spans)
+        draft, _ = generate_draft(events, spans)
     cited = {sid for c in draft.claims for sid in c.evidence_span_ids}
     facts = expected["expected_facts"]
     missing = [f["fact_id"] for f in facts if not quote_spans(f["evidence"], spans) & cited]
@@ -40,7 +42,6 @@ def coverage() -> dict:
 
 if __name__ == "__main__":
     os.chdir(ROOT)
-    os.environ.setdefault("LLM_MODE", "replay")
     r = coverage()
     print(f"Known-fact coverage: {r['facts'] - len(r['missing'])}/{r['facts']}  missing: {', '.join(r['missing']) or '-'}")
     print(f"Citation resolution: {r['resolved']}/{r['cited']} cited span IDs exist")

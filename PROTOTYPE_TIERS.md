@@ -1,7 +1,8 @@
 # Discharge Copilot — prototype status
 
-Updated 2026-10-09 ~17:50 AST. Branch `main` @ `cd8fd3a`. 59 tests pass (`.venv/bin/python -m pytest -q -p no:cacheprovider`).
-Run: `.venv/bin/streamlit run app.py` → Load sample case. App replays recorded LLM output (offline, deterministic).
+Updated 2026-10-09 ~18:45 AST. Branch `main` @ `c08eb03` + uncommitted changes. 26 fast tests pass; 30 `live` tests pass
+against the real model (`pytest -m live`, ~90 s).
+Run: `.venv/bin/streamlit run app.py` → Load sample case. Every model call is live (needs `OPENAI_API_KEY`).
 
 ## Done
 | Area | Status |
@@ -10,43 +11,41 @@ Run: `.venv/bin/streamlit run app.py` → Load sample case. App replays recorded
 | Ingest | txt + text-PDF → stable span IDs with page numbers |
 | Extraction | one LLM call (~56 s), one fact per event, one flagged event per conflict, quote-gated citations, 1 retry, visible warnings |
 | Draft | cited SummaryClaims, D01 flagged, "Not documented" sections |
-| UI | workflow tabs: Summary (collapsible sections) · Needs review (n) · Ask about the notes · Sources · Approve & export (with export preview); citation popovers, D01 side-by-side, corrected conflict claim turns green |
+| UI | workflow tabs: Summary (collapsible sections) · Needs review (n) · Ask about the notes (chat) · Sources · Approve & export (with export preview); citation popovers, D01 side-by-side, corrected conflict claim turns green |
 | Tier B — corrections | propose → diff → accept/reject, clinician-provided label, evidence kept, approval reset |
-| Tier C — questions | LangGraph classify → retrieve (all passages) → answer / read_section / clarify; validated citations; "The available notes do not establish that."; flag attributed to the app |
+| Tier C — questions | LangGraph classify → retrieve (all passages) → answer / read_section / clarify; validated citations; "The available notes do not establish that." (once per answer); flag attributed to the app |
+| Conversation | chat UI (`st.chat_input` / `st.chat_message`); LangGraph `InMemorySaver` per `thread_id`; last 3 Q&A turns (read-section answers included) sent with each question, marked as not evidence; new thread on Load sample case |
 | Approve + export | Markdown with synthetic label, status, discrepancies, clarifications, source appendix |
-| Infra | record/replay, Responses API (`store=False`), 120 s timeout, error handling |
-| Docs + checks | README; `python -m scripts.coverage` (15/16 facts, 24/24 citations, D01 1/1) |
+| Infra | live calls only (record/replay removed), Responses API (`store=False`), 120 s timeout, error handling |
+| Tests | fast suite (no model) by default; `-m live` suite shares one extraction + draft per session (6 model calls) |
+| Docs + checks | README; `python -m scripts.coverage` (live; last replayed run: 15/16 facts, 24/24 citations, D01 1/1) |
 
 Spec acceptance: T01–T10, T12 automated; T11 passes by design (no speech dependency).
 
-## Demo script (offline, deterministic)
+## Demo script (live)
 1. Load sample case → **Summary** tab: open a citation popover
 2. **Needs review** tab: D01 side by side
-3. **Ask about the notes**: "Why do the notes mention different doses?"
-4. **Ask about the notes**: "What was the reason for the Medication A dose change?"
+3. **Ask about the notes** (chat): "Why do the notes mention different doses?"
+4. Follow-up in the same chat: "What was the reason for the Medication A dose change?"
 5. **Needs review**: propose the 5 mg → 10 mg correction → Accept (C11 turns green in Summary)
 6. **Ask about the notes**: "Read the condition at discharge"
 7. **Approve & export**: Approve → Export
 
-Other questions go live (network + key, a few seconds); failures show "Question failed".
-
-Also recorded: "what was the clients condition?".
+Any question works (a few seconds); failures show "Question failed".
 
 ## Next
-1. Follow-up questions: send the session's previous Q&A with each new question (chat history in the `answer` prompt); re-record scripted questions.
-2. "Not established" wording: the model tacks the exact sentence onto answers that already say it ("…do not establish why the doses differ. The available notes do not establish that."; "…documentation; The available notes do not establish that."). Fix in the `review_graph.SYSTEM` prompt (e.g. use it only when nothing relevant is documented) + re-record.
-3. Timeout: 120 s applies to every call, so a hanging live question takes up to ~6 min (SDK retries ×2) to fail. Option: default 30 s, `LLM_TIMEOUT` env override for recording; restore the 30 s test.
-4. Lightweight RAG to replace "all passages" when cases get bigger (`ponytail:` in `review_graph.retrieve`); keyword retrieval was removed because it missed synonyms ("client" vs "patient").
-5. OpenAI console: calls don't appear in Logs because of `store=False` (`core/llm.py`); changing it changes every request hash → full re-record.
-6. Accepting a correction leaves `support_status="needs_review"` (only the UI tag turns green); export still lists the claim as needs_review.
-7. Coverage metric is passage-level, so it can't show per-fact extraction gains; sentence-level matching if needed.
+1. Timeout: 120 s (sized for extraction, ~56 s) applies to every call; with the SDK's 2 retries, a question that hangs takes up to ~6 min to fail (only when the API stalls). Fix: short timeout for questions, long for extraction.
+2. **Must be optimized:** lightweight RAG to replace "all passages" before cases get bigger (`ponytail:` in `review_graph.retrieve`); keyword retrieval was removed because it missed synonyms ("client" vs "patient").
+3. OpenAI console: set `store=True` in `core/llm.py` so calls appear in Logs.
+4. Accepting a correction leaves `support_status="needs_review"` (only the UI tag turns green); export still lists the claim as needs_review.
+5. Coverage metric is passage-level: a fact counts as found if any claim cites its passage, so the score can be too high. Match facts in claim text if the number matters.
 
 ## Backlog — try if time allows
 ### Model-drafted correction from free text (spec §8.3) — ~15 min, high risk
 - Add `propose_edit` intent to `core/review_graph.py`: classifier routes edit-like input ("It was 5 mg initially…") to a node that calls the LLM with the draft claims and returns `{target_claim_id, after}`.
 - Validate: target claim exists; output becomes a `ProposedRevision` via `core/revise.propose` (never applied automatically).
 - UI: show the proposal in the existing Clinician correction panel (Accept/Reject unchanged).
-- Needs recordings for the scripted correction; tests: target resolved, draft unchanged before accept, unknown target rejected.
+- Tests (one `live` test for the scripted correction): target resolved, draft unchanged before accept, unknown target rejected.
 
 ### Speech (spec P1, §9) — 15+ min, high risk
 - `st.audio_input("Record voice")` → `OpenAI().audio.transcriptions.create(model=STT_MODEL)` (verify SDK signature first).

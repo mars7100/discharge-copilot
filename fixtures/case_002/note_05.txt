@@ -1,0 +1,26 @@
+SYNTHETIC DATA — FICTIONAL PATIENT — NOT FOR CLINICAL USE
+NOTE_ID: note_05
+CASE: case_002 (Synthetic Patient 002)
+DATE: 2026-03-12 (Hospital Day 3)
+TYPE: Daily progress note
+AUTHOR ROLE: Ward resident (synthetic)
+
+S: Pt reports SOB improving. Slept on 2 pillows. No CP.
+
+O: T 36.6 C | HR 80 | BP 126/74 | RR 18 | SpO2 94% RA
+I/O: net -2.1 L. Wt down 2 kg from admit.
+
+Exam: JVD to clavicle. Faint crackles R base. 1+ BLE edema.
+
+Labs: Na 137, K 3.9, BUN 30, Cr 1.3, Mg 2.0.
+
+A/P: 72M w/ HFrEF exacerbation, improving.
+
+1. Acute on chronic HFrEF: Cont furosemide 40 mg IV BID. Plan transition to PO diuretic tomorrow if euvolemic. TTE pending.
+2. AKI on CKD 3a: Cr 1.3, near baseline. Consider restarting lisinopril prior to d/c.
+3. Hypokalemia: Resolved.
+4. Hypoxemia: Resolved, on RA.
+5. HTN: Cont metoprolol.
+6. T2DM: Cont SSI. Hold metformin.
+7. VTE ppx: Heparin SQ.
+Dispo: Anticipate d/c home tomorrow.

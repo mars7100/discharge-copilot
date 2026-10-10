@@ -1,0 +1,14 @@
+SYNTHETIC DATA — FICTIONAL PATIENT — NOT FOR CLINICAL USE
+NOTE_ID: note_12
+CASE: case_003 (Synthetic Patient 003)
+DATE: 2026-04-11 (Hospital Day 10)
+TYPE: Physical therapy evaluation
+AUTHOR ROLE: Physical therapist (synthetic)
+
+PLOF: Independent ambulation w/o device, independent ADLs, lives alone in 2-story home, bedroom on 2nd floor.
+
+Current: Bed mobility min assist. Sit-to-stand mod assist x 2 trials. Ambulated 40 ft w/ rolling walker, min-mod assist, 1 LOB recovered w/ assist. SpO2 93% RA. Unable to attempt stairs.
+
+Assessment: Significant decline from baseline 2/2 critical illness myopathy/deconditioning. High fall risk.
+
+Recommendations: SNF for short-term rehab. Rolling walker. PT 5x/week while inpatient. Pt not safe to return home alone at this time.

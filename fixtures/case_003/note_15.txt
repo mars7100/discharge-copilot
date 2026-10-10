@@ -1,0 +1,25 @@
+SYNTHETIC DATA — FICTIONAL PATIENT — NOT FOR CLINICAL USE
+NOTE_ID: note_15
+CASE: case_003 (Synthetic Patient 003)
+DATE: 2026-04-15 (Hospital Day 14)
+TYPE: Discharge day progress note
+AUTHOR ROLE: Hospitalist (synthetic)
+
+S: Feels "stronger." 1 formed BM/24h. No confusion per RN.
+
+O: T 36.7 C | HR 70 AF | BP 130/78 | RR 16 | SpO2 96% RA
+Exam: Alert, oriented x3. Lungs: faint crackles RLL. Abd benign. Sacrum: healing, intact.
+Labs: WBC 8.6, Plt 214, Cr 0.9.
+
+A/P: 78F s/p septic shock 2/2 pneumococcal CAP, c/b AKI, delirium, C. diff, dysphagia and deconditioning. Medically stable for discharge to SNF.
+
+1. C. diff: Complete vancomycin course at SNF.
+2. AF: Cont apixaban 5 mg BID. Resume home metoprolol.
+3. HTN: Resume amlodipine.
+4. Delirium: Resolved.
+5. Hypothyroidism: Cont levothyroxine 75 mcg.
+6. MCI: Cont donepezil.
+
+Diet: Regular.
+Code status: Full code.
+Follow-up: PCP in 1-2 weeks.

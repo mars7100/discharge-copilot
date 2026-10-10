@@ -1,0 +1,20 @@
+SYNTHETIC DATA — FICTIONAL PATIENT — NOT FOR CLINICAL USE
+NOTE_ID: note_05
+CASE: case_003 (Synthetic Patient 003)
+DATE: 2026-04-05 (Hospital Day 4)
+TYPE: ICU day shift nursing note
+AUTHOR ROLE: ICU registered nurse (synthetic)
+
+0800: Pt A&O x2 (self, place). Mitts d/c'd yesterday, no further pulling at lines.
+
+VS: HR 88-98 AF, BP 118/70, SpO2 94% 3L NC, T 37.4 C.
+
+Meds given: Ceftriaxone 2 g IV. Metoprolol tartrate 12.5 mg PO. Levothyroxine 75 mcg PO.
+
+Swallow: Pt coughing w/ thin liquids at breakfast. Held PO fluids and notified MD; SLP consult requested.
+
+Lines: R IJ CVC removed 1100, tip intact, pressure held 5 min. Foley removed 1200, pt to void by 1800.
+
+Skin: Stage 1 pressure injury noted sacrum, 2 x 3 cm, blanchable. Repositioned q2h, foam dressing applied, wound care consult placed.
+
+Report called to 6 West. Transferred 1500 by wheelchair w/ portable O2.

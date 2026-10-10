@@ -1,0 +1,14 @@
+SYNTHETIC DATA — FICTIONAL PATIENT — NOT FOR CLINICAL USE
+NOTE_ID: note_14
+CASE: case_003 (Synthetic Patient 003)
+DATE: 2026-04-14 (Hospital Day 13)
+TYPE: Case management note
+AUTHOR ROLE: Case manager (synthetic)
+
+SNF referral sent to 4 facilities 4/11. Accepted at Maplewood Rehabilitation Center (synthetic), bed available 4/15. Insurance auth approved 4/14, 14 days initial.
+
+Daughter (HCP) agrees w/ plan, will bring clothes. Transport: wheelchair van arranged 4/15 at 1300.
+
+DME: Rolling walker to be provided by SNF.
+
+Pending for d/c: Discharge summary, med rec, POLST.

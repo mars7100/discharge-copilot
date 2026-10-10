@@ -1,23 +1,27 @@
 import json
 import os
+from collections.abc import AsyncIterator
+from contextlib import aclosing
 from datetime import datetime
 from pathlib import Path
+from typing import Literal
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import Response, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from api import sessions
 from api.schemas import Approve, Ask, CreateSession, Propose, Resolve
-from api.streaming import FIXTURES, run_resume, start, stream_load
-from core.export import to_markdown
-from core.review_graph import ask
+from api.streaming import FIXTURES, run_resume, sse, start, stream_load
+from core.export import to_docx, to_markdown
+from core.review_graph import ask, ask_stream
 from core.revise import accept, propose, rewrite
 
 app = FastAPI()
 UI_DIR = Path(os.environ.get("DISCHARGE_UI_DIR", Path(__file__).parent.parent / "frontend" / "dist"))
 TEMPLATE = Path(__file__).parent.parent / "core" / "template.json"
+ASK_RUNNING: set[str] = set()  # guarded by sessions.lock; JSON and streamed asks share history
 
 
 @app.get("/api/cases")
@@ -87,12 +91,49 @@ def reviewable(sid: str) -> dict:
 
 @app.post("/api/sessions/{session_id}/ask")
 def ask_question(session_id: str, body: Ask):
-    s = reviewable(session_id)
+    s = begin_ask(session_id)
     try:
         r = ask(body.question, s["draft"], s["spans"], s["events"], thread_id=s["chat_thread_id"])
     except Exception as e:
         raise HTTPException(502, f"{type(e).__name__}: {e}")
+    finally:
+        with sessions.lock:
+            ASK_RUNNING.discard(session_id)
     return {"intent": r["intent"], "answer": r["answer"], "cited": r["cited"]}
+
+
+def begin_ask(session_id: str) -> dict:
+    """Reserve one review conversation without holding the store lock during model I/O."""
+    with sessions.lock:
+        s = reviewable(session_id)
+        if session_id in ASK_RUNNING:
+            raise HTTPException(409, "ask running")
+        ASK_RUNNING.add(session_id)
+        return s
+
+
+@app.post("/api/sessions/{session_id}/ask/stream")
+async def stream_question(session_id: str, body: Ask, request: Request) -> StreamingResponse:
+    """Return incremental SSE review events and close model I/O on disconnect."""
+    s = begin_ask(session_id)
+
+    async def drain() -> AsyncIterator[str]:
+        """Encode events, releasing the conversation reservation on every exit."""
+        try:
+            async with aclosing(ask_stream(body.question, s["draft"], s["spans"], s["events"],
+                                          thread_id=s["chat_thread_id"])) as stream:
+                async for name, data in stream:
+                    if await request.is_disconnected():
+                        return
+                    yield sse(name, data)
+        except Exception as e:
+            yield sse("error", {"detail": f"{type(e).__name__}: {e}"})
+        finally:
+            with sessions.lock:
+                ASK_RUNNING.discard(session_id)
+
+    return StreamingResponse(drain(), media_type="text/event-stream",
+                             headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
 
 
 @app.post("/api/sessions/{session_id}/corrections", status_code=201)
@@ -155,14 +196,18 @@ def approve(session_id: str, body: Approve):
 
 
 @app.get("/api/sessions/{session_id}/export")
-def export(session_id: str):
+def export(session_id: str, format: Literal["markdown", "docx"] = "markdown") -> Response:
+    """Download an approved summary in the requested document format."""
     s = reviewable(session_id)
     if s["draft"].status != "approved":
         raise HTTPException(409, "not approved")
-    md = to_markdown(s["draft"], s["spans"], s["documents"], case_id=s["case_id"], clarifications=s["clarifications"], resolutions=s["resolutions"],
-                     missing_notes=s["missing_notes"])
-    return Response(md, media_type="text/markdown",
-                    headers={"Content-Disposition": f'attachment; filename="discharge_summary_{s["case_id"]}.md"'})
+    render = to_docx if format == "docx" else to_markdown
+    content = render(s["draft"], s["spans"], s["documents"], case_id=s["case_id"], clarifications=s["clarifications"], resolutions=s["resolutions"],
+                      missing_notes=s["missing_notes"])
+    extension = "docx" if format == "docx" else "md"
+    mime = "application/vnd.openxmlformats-officedocument.wordprocessingml.document" if format == "docx" else "text/markdown"
+    return Response(content, media_type=mime,
+                    headers={"Content-Disposition": f'attachment; filename="discharge_summary_{s["case_id"]}.{extension}"'})
 
 
 class SinglePageApplicationFiles(StaticFiles):

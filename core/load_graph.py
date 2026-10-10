@@ -101,7 +101,7 @@ def resolve(state: LoadState) -> dict:
     resolutions = []
     for c in state["conflicts"]:
         a = answers[c.conflict_id]
-        # stored-text rule; mirrored in frontend/src/App.tsx::storedText (keep both in sync)
+        # Stored-text rule mirrored in CanvasApp.tsx's resolution checkpoint; keep both in sync.
         text = (f"{c.description}: {next(q.quote for q in c.quotes if q.span_id == a['chosen_span_id'])}"
                 if a["chosen_span_id"] else a["clarification"].strip())
         resolutions.append(Resolution(conflict_id=c.conflict_id, text=text, chosen_span_id=a["chosen_span_id"], quotes=c.quotes))

@@ -5,3 +5,5 @@ __pycache__/
 .pytest_cache/
 exports/
 frontend/node_modules/
+.builder/
+frontend/.mockup-evidence/

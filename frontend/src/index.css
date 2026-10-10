@@ -1,5 +1,3 @@
 @import "tailwindcss";
 @custom-variant dark (&:where(.dark, .dark *)); /* light-only: dark styles need an explicit .dark class, not the OS setting */
 @source not "../dist"; /* dist is committed; never scan the previous build */
-@source "../.flowbite-react/class-list.json";
-@import "flowbite-react/plugin/tailwindcss";

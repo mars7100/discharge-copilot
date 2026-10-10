@@ -1,4 +1,4 @@
-# Prototype UI attribution
+# Canvas UI attribution
 
 Adapted from the following MIT-licensed Uiverse elements:
 

@@ -2,6 +2,8 @@
 import operator
 import re
 import uuid
+from collections.abc import AsyncIterator, Sequence
+from contextlib import aclosing
 from typing import Annotated, TypedDict
 
 from langgraph.checkpoint.memory import InMemorySaver
@@ -12,7 +14,7 @@ from pydantic import BaseModel
 
 from core import llm
 from core.export import SECTIONS, marker
-from core.models import Draft, SourceSpan
+from core.models import ClinicalEvent, Draft, SourceSpan
 
 NOT_ESTABLISHED = "The available notes do not establish that."
 SYSTEM = f"""You answer a clinician's question about a synthetic hospitalization using ONLY the supplied note passages.
@@ -65,9 +67,8 @@ def note_date(spans: dict[str, SourceSpan], doc_id: str) -> str:
     return m.group(1) if m else "unknown"
 
 
-def answer(s: State) -> State:
-    if not s["retrieved"]:
-        return {"answer": NOT_ESTABLISHED, "cited": []}
+def answer_messages(s: State) -> list[dict]:
+    """Build the shared evidence and bounded conversation prompt."""
     passages = "\n".join(f"[{sid}] (note dated {note_date(s['spans'], s['spans'][sid].document_id)}) {s['spans'][sid].text}"
                          for sid in s["retrieved"])
     flags = "".join(f"\nFlagged for review by this app (not stated in the notes): {d.description}"
@@ -75,10 +76,15 @@ def answer(s: State) -> State:
                     if set(d.source_span_ids) & set(s["retrieved"]))
     history = [m for t in s.get("turns", [])[-HISTORY_TURNS:]
                for m in ({"role": "user", "content": t["q"]}, {"role": "assistant", "content": t["a"]})]
-    messages = [{"role": "system", "content": SYSTEM},
+    return [{"role": "system", "content": SYSTEM},
                 *([{"role": "system", "content": HISTORY_NOTE}] + history if history else []),
                 {"role": "user", "content": f"Passages:\n{passages}{flags}\n\nQuestion: {s['question']}"}]
-    out = llm.parse(Answer, messages, TIMEOUT)
+
+
+def answer(s: State) -> State:
+    if not s["retrieved"]:
+        return {"answer": NOT_ESTABLISHED, "cited": []}
+    out = llm.parse(Answer, answer_messages(s), TIMEOUT)
     return {"answer": out.answer, "cited": [sid for sid in out.span_ids if sid in s["retrieved"]],  # drop unretrieved IDs
             "turns": [{"q": s["question"], "a": out.answer}]}
 
@@ -114,3 +120,41 @@ def ask(question: str, draft: Draft, spans: dict[str, SourceSpan], events=(), th
     """Same thread_id = same conversation; None starts a fresh one."""
     return graph.invoke({"question": question, "draft": draft, "spans": spans, "events": list(events)},
                         {"configurable": {"thread_id": thread_id or uuid.uuid4().hex}})
+
+
+async def ask_stream(question: str, draft: Draft, spans: dict[str, SourceSpan],
+                     events: Sequence[ClinicalEvent] = (), thread_id: str | None = None) -> AsyncIterator[tuple[str, dict]]:
+    """Stream a review answer and checkpoint only a successfully consumed final answer."""
+    config = {"configurable": {"thread_id": thread_id or uuid.uuid4().hex}}
+    s: State = {"question": question, "draft": draft, "spans": spans, "events": list(events),
+                "turns": graph.get_state(config).values.get("turns", [])}
+    yield "status", {"stage": "classifying"}
+    s.update(classify(s))
+    if s["intent"] == "read_section":
+        result = read_section(s)
+    elif s["intent"] == "unknown":
+        result = clarify(s)
+    else:
+        yield "status", {"stage": "retrieving"}
+        s.update(retrieve(s))
+        if not s["retrieved"]:
+            result = {"answer": NOT_ESTABLISHED, "cited": []}
+        else:
+            yield "status", {"stage": "answering"}
+            out = None
+            async with aclosing(llm.stream_answer(Answer, answer_messages(s), TIMEOUT)) as stream:
+                async for part in stream:
+                    if isinstance(part, str):
+                        yield "delta", {"text": part}
+                    else:
+                        out = part
+            if out is None:
+                raise RuntimeError("model returned no parsed output")
+            result = {"answer": out.answer, "cited": [sid for sid in out.span_ids if sid in s["retrieved"]],
+                      "turns": [{"q": question, "a": out.answer}]}
+    yield "answer", {"intent": s["intent"], "answer": result["answer"], "cited": result["cited"]}
+    # Reuse the same reducer/checkpointer as JSON ask, including read-section turns.
+    graph.update_state(config, {**{k: v for k, v in s.items() if k != "turns"}, **result},
+                       as_node="read_section" if s["intent"] == "read_section" else
+                       "clarify" if s["intent"] == "unknown" else "answer")
+    yield "done", {}

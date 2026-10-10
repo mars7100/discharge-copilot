@@ -4,10 +4,14 @@
 
 **Blocked by:** 02, 07
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] One draft call per section, run concurrently
-- [ ] Optional sections with `documented: false` are omitted; required ones show "Not documented in the supplied notes."
-- [ ] Section-drafted / section-omitted events stream and render
-- [ ] Claim citations validated as before; numbering stable in section order
-- [ ] `live`: case_001 draft includes discharge diagnoses and follow-up, cites passages, and keeps the clinician resolution
+- [x] One draft call per section, run concurrently
+- [x] Optional sections with `documented: false` are omitted; required ones show "Not documented in the supplied notes."
+- [x] Section-drafted / section-omitted events stream and render
+- [x] Claim citations validated as before; numbering stable in section order
+- [x] `live`: case_001 draft includes discharge diagnoses and follow-up, cites passages, and keeps the clinician resolution
+
+## Comments
+
+- Resolved in `1bd415b`. Contract: `08-contract.md`. Live case_001 test passed (39 s for the whole test, including extraction). A section whose retry throws fails the load, per the contract decision.

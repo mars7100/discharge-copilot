@@ -4,9 +4,13 @@
 
 **Blocked by:** 08
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] Output schema restricts drop IDs to existing claim IDs (verified with a live call)
-- [ ] Listed claims are removed; resolution-carrying last claim is never removed
-- [ ] Dedupe-applied event streams with the count
-- [ ] Draft output is otherwise unchanged
+- [x] Output schema restricts drop IDs to existing claim IDs (verified with a live call)
+- [x] Listed claims are removed; resolution-carrying last claim is never removed
+- [x] Dedupe-applied event streams with the count
+- [x] Draft output is otherwise unchanged
+
+## Comments
+
+- Resolved in `e4192f8`. Contract: `10-contract.md`. Live: the enum drop-list schema is accepted by the API and returns only existing claim IDs; the case_001 load after dedupe keeps diagnoses, follow-up, pneumonia/hypertension groups and the D01 resolution (79 s for both live tests). Added beyond the ticket: a section guard that never empties a section or problem group.

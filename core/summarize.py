@@ -2,15 +2,16 @@
 from pydantic import BaseModel
 
 from core import llm
-from core.models import ClinicalEvent, Discrepancy, Draft, SourceSpan, SummaryClaim
+from core.models import TEMPLATE, ClinicalEvent, Discrepancy, Draft, SourceSpan, SummaryClaim
 
 SYSTEM = """You draft a discharge summary for a synthetic hospitalization from extracted, documented events.
 - Use only the supplied events. No general medical knowledge, no rationale or detail the events do not state.
 - One documented fact per claim, one or two short sentences. Hospital course claims in chronological order.
 - evidence_span_ids: copy span IDs exactly from the evidence of the events the claim is based on.
-- Sections: reason_for_admission, hospital_course, key_events (tests/interventions/documented changes), condition_at_discharge, follow_up, pending_items. Omit a section if nothing is documented for it.
+- Sections: """ + ", ".join(f"{s['section_id']} ({s['purpose']})" for s in TEMPLATE) + """. Omit a section if nothing is documented for it.
 - If events conflict (needs_review), state both documented values with their sources and do not resolve or explain the conflict.
 - claim_id any placeholder; clinician_clarification_ids empty; support_status "unverified"."""
+TIMEOUT = 35
 
 
 class SummaryResult(BaseModel):
@@ -42,7 +43,7 @@ def generate_draft(events: list[ClinicalEvent], spans: dict[str, SourceSpan]) ->
     claims, errors = [], []
     for attempt in range(2):
         try:
-            result = llm.parse(SummaryResult, messages)
+            result = llm.parse(SummaryResult, messages, TIMEOUT)
         except Exception as e:
             if not attempt:
                 continue

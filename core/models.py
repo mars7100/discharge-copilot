@@ -1,5 +1,7 @@
 """Pydantic contracts (spec §6). Cross-object checks (span IDs exist, quotes match) live in validate.py."""
+import json
 from datetime import datetime
+from pathlib import Path
 from typing import Literal
 
 from pydantic import BaseModel, Field
@@ -41,10 +43,8 @@ class ClinicalEvent(BaseModel):
     needs_review: bool = False
 
 
-Section = Literal[
-    "reason_for_admission", "hospital_course", "key_events",
-    "condition_at_discharge", "follow_up", "pending_items",
-]
+TEMPLATE = json.loads((Path(__file__).parent / "template.json").read_text())["sections"]  # in export order
+Section = Literal[tuple(s["section_id"] for s in TEMPLATE)]
 
 
 class SummaryClaim(BaseModel):

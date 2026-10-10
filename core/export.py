@@ -1,12 +1,9 @@
 """Draft -> Markdown export with source appendix (spec §10 Export output)."""
 from datetime import datetime
 
-from core.models import ClinicianClarification, Document, Draft, SourceSpan
+from core.models import TEMPLATE, ClinicianClarification, Document, Draft, SourceSpan
 
-SECTIONS = {"reason_for_admission": "Reason for admission", "hospital_course": "Hospital course",
-            "key_events": "Key tests, interventions and documented changes",
-            "condition_at_discharge": "Condition at discharge", "follow_up": "Follow-up",
-            "pending_items": "Pending items"}
+SECTIONS = {s["section_id"]: s["title"] for s in TEMPLATE}
 NOT_DOCUMENTED = "Not documented in the supplied notes."
 
 
@@ -20,9 +17,11 @@ def to_markdown(draft: Draft, spans: dict[str, SourceSpan], documents: list[Docu
               else "DRAFT — NOT APPROVED")
     out = ["# Discharge summary", "", "**SYNTHETIC DEMONSTRATION — NOT FOR CLINICAL USE**", "",
            f"- Case: {case_id} (fictional)", f"- Status: {status}", f"- Generated: {datetime.now():%Y-%m-%d %H:%M}", ""]
-    for key, title in SECTIONS.items():
-        out += [f"## {title}", ""]
-        claims = [c for c in draft.claims if c.section == key]
+    for section in TEMPLATE:
+        claims = [c for c in draft.claims if c.section == section["section_id"]]
+        if not claims and section["optional"]:
+            continue
+        out += [f"## {section['title']}", ""]
         for c in claims:
             flag = " **(needs review)**" if c.support_status == "needs_review" else ""
             clar = " *(clinician-provided)*" if c.clinician_clarification_ids else ""

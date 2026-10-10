@@ -15,7 +15,7 @@ MSGS = [{"role": "user", "content": "hi"}]
 def env(monkeypatch):
     monkeypatch.setenv("LLM_MODEL", "test-model")
     monkeypatch.setenv("OPENAI_API_KEY", "sk-SENTINEL-123")
-    monkeypatch.setattr(llm, "_call", lambda schema, messages: pytest.fail("live call attempted"))
+    monkeypatch.setattr(llm, "_call", lambda *a: pytest.fail("live call attempted"))
 
 
 REAL_CALL = llm._call  # captured before the autouse fixture patches it
@@ -45,23 +45,23 @@ def test_model_defaults_to_gpt_6_luna(monkeypatch):
     monkeypatch.setenv("LLM_MODEL", "gpt-6-luna")
     monkeypatch.delenv("LLM_MODEL")
     seen = fake_openai(monkeypatch, Out(answer="ok"))
-    REAL_CALL(Out, MSGS)
+    REAL_CALL(Out, MSGS, 35)
     assert seen["model"] == "gpt-6-luna"
 
 
 def test_call_uses_responses_api_with_storage(monkeypatch):
     seen = fake_openai(monkeypatch, Out(answer="parsed"))
-    assert REAL_CALL(Out, MSGS) == Out(answer="parsed")
+    assert REAL_CALL(Out, MSGS, 35) == Out(answer="parsed")
     assert seen == {"model": "test-model", "input": MSGS, "text_format": Out, "store": True}
 
 
 def test_call_raises_when_no_parsed_output(monkeypatch):
     fake_openai(monkeypatch, None)
     with pytest.raises(Exception, match="no parsed output"):
-        REAL_CALL(Out, MSGS)
+        REAL_CALL(Out, MSGS, 35)
 
 
-def test_call_sets_client_timeout(monkeypatch):
+def test_call_sets_timeout_and_disables_client_retries(monkeypatch):
     init = {}
     seen = fake_openai(monkeypatch, Out(answer="ok"))
     Base = llm.OpenAI
@@ -72,6 +72,6 @@ def test_call_sets_client_timeout(monkeypatch):
             super().__init__(*a, **k)
 
     monkeypatch.setattr(llm, "OpenAI", Recording)
-    REAL_CALL(Out, MSGS)
-    assert init.get("timeout") == 120
+    REAL_CALL(Out, MSGS, 35)
+    assert init.get("timeout") == 35 and init.get("max_retries") == 0
     assert seen == {"model": "test-model", "input": MSGS, "text_format": Out, "store": True}

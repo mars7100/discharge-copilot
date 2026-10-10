@@ -14,6 +14,7 @@ SYSTEM = """You extract clinical events from synthetic hospital notes.
 - For each hospital day, include vital-sign status and medication status when documented.
 - Set needs_review to true when the notes document conflicting values for the same fact in an overlapping or unclear time period.
 - Report each conflict as exactly one needs_review event citing one passage from each conflicting note; do not set needs_review on any other event."""
+TIMEOUT = 90  # one call for all notes (42 s measured); ticket 06 drops it to 35
 
 
 class ExtractionResult(BaseModel):
@@ -33,7 +34,7 @@ def extract_events(documents: list[Document], spans: dict[str, SourceSpan]) -> t
     events, errors = [], []
     for attempt in range(2):
         try:
-            result = llm.parse(ExtractionResult, messages)
+            result = llm.parse(ExtractionResult, messages, TIMEOUT)
         except Exception as e:
             if attempt:
                 if not events:

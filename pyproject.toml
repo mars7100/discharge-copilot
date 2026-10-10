@@ -3,12 +3,14 @@ name = "discharge-copilot"
 version = "0.1.0"
 requires-python = ">=3.12"
 dependencies = [
+    "fastapi>=0.141.1",
     "langgraph>=1.2.14",
     "openai>=3.27.0",
     "pydantic>=2.14.0",
     "pymupdf>=1.28.2",
     "python-dotenv>=1.2.4",
     "streamlit>=1.65.0",
+    "uvicorn[standard]>=0.52.4",
 ]
 
 [tool.pytest.ini_options]
@@ -18,5 +20,6 @@ addopts = "-m 'not live'"
 
 [dependency-groups]
 dev = [
+    "httpx>=0.28.1",
     "pytest>=9.1.1",
 ]

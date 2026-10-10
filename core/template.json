@@ -1,0 +1,25 @@
+{
+  "document_type": "discharge_summary",
+  "sections": [
+    {"section_id": "reason_for_admission", "title": "Reason for admission",
+     "purpose": "why the patient was admitted", "optional": false},
+    {"section_id": "discharge_diagnoses", "title": "Discharge diagnoses",
+     "purpose": "diagnoses documented at discharge", "optional": true},
+    {"section_id": "hospital_course", "title": "Hospital course",
+     "purpose": "what happened during the stay, in chronological order", "optional": false},
+    {"section_id": "procedures", "title": "Procedures",
+     "purpose": "procedures performed during the stay", "optional": true},
+    {"section_id": "key_events", "title": "Key tests, interventions and documented changes",
+     "purpose": "tests, interventions and documented changes", "optional": true},
+    {"section_id": "condition_at_discharge", "title": "Condition at discharge",
+     "purpose": "the patient's condition at discharge", "optional": false},
+    {"section_id": "discharge_medications", "title": "Discharge medications",
+     "purpose": "medications the patient is discharged on", "optional": true},
+    {"section_id": "patient_instructions", "title": "Patient instructions",
+     "purpose": "instructions or information given to the patient", "optional": true},
+    {"section_id": "follow_up", "title": "Follow-up",
+     "purpose": "follow-up appointments and plans", "optional": false},
+    {"section_id": "pending_items", "title": "Pending items",
+     "purpose": "results or tasks still pending at discharge", "optional": true}
+  ]
+}

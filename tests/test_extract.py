@@ -24,8 +24,8 @@ def stub(monkeypatch, *responses):
     """Each response: list of events, or an Exception to raise. Records messages of every call."""
     calls = []
 
-    def parse(schema, messages):
-        assert schema is ExtractionResult
+    def parse(schema, messages, timeout):
+        assert schema is ExtractionResult and timeout == 90
         calls.append(messages)
         r = responses[min(len(calls), len(responses)) - 1]
         if isinstance(r, Exception):

@@ -27,7 +27,8 @@ def stub(monkeypatch):
         span_ids = list(CONFLICT)  # what the stubbed model cites; tests may override
     calls = Calls()
 
-    def fake(schema, messages):
+    def fake(schema, messages, timeout):
+        assert timeout == 35
         calls.append({"messages": messages})
         return rg.Answer(answer="x", span_ids=calls.span_ids)
 
@@ -64,6 +65,32 @@ def test_cited_ids_not_retrieved_are_dropped(case, stub):  # T12
     stub.span_ids = ["note_04_p01_b07", "bogus"]
     out = rg.ask("What does [N04:B07] say?", draft, spans, events)
     assert out["cited"] == ["note_04_p01_b07"]
+
+
+def test_answer_retries_once_on_transient_error_only(case, monkeypatch):
+    import httpx
+    import openai
+    draft, spans, events = case
+    calls = []
+
+    def flaky(schema, messages, timeout):
+        calls.append(1)
+        if len(calls) == 1:
+            raise openai.APITimeoutError(request=httpx.Request("POST", "https://x"))
+        return rg.Answer(answer="x", span_ids=[])
+
+    monkeypatch.setattr(llm, "parse", flaky)
+    assert rg.ask("What was given on day 1?", draft, spans, events)["answer"] == "x" and len(calls) == 2
+
+    def broken(schema, messages, timeout):
+        calls.append(1)
+        raise RuntimeError("not transient")
+
+    calls.clear()
+    monkeypatch.setattr(llm, "parse", broken)
+    with pytest.raises(RuntimeError):
+        rg.ask("What was given on day 1?", draft, spans, events)
+    assert len(calls) == 1
 
 
 def test_read_section_uses_draft_without_llm(case, stub):
@@ -233,9 +260,9 @@ def test_app_follow_up_carries_history_and_reload_resets_it(monkeypatch):
     at = app_loaded(monkeypatch)
     stub, real = [], llm.parse
 
-    def fake(schema, messages):  # questions only
+    def fake(schema, messages, timeout):  # questions only
         if schema is not rg.Answer:
-            return real(schema, messages)
+            return real(schema, messages, timeout)
         stub.append({"messages": messages})
         return rg.Answer(answer="x", span_ids=CONFLICT)
 

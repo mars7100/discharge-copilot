@@ -7,6 +7,7 @@ from typing import Annotated, TypedDict
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.checkpoint.serde.jsonplus import JsonPlusSerializer
 from langgraph.graph import END, START, StateGraph
+from langgraph.types import RetryPolicy
 from pydantic import BaseModel
 
 from core import llm
@@ -21,6 +22,7 @@ SYSTEM = f"""You answer a clinician's question about a synthetic hospitalization
 - "Flagged for review" lines come from this review tool, not from the notes: attribute any flagged conflict to the review tool, never say the notes flag it.
 - span_ids: the IDs of the passages your answer relies on, copied exactly. Do not write span IDs in the answer text. Two to four sentences."""
 HISTORY_TURNS = 3
+TIMEOUT = 35
 HISTORY_NOTE = """Earlier turns of this conversation follow. Use them only to understand what the new question refers to.
 Earlier answers are not evidence: rely on and cite only the passages supplied with the new question."""
 
@@ -76,7 +78,7 @@ def answer(s: State) -> State:
     messages = [{"role": "system", "content": SYSTEM},
                 *([{"role": "system", "content": HISTORY_NOTE}] + history if history else []),
                 {"role": "user", "content": f"Passages:\n{passages}{flags}\n\nQuestion: {s['question']}"}]
-    out = llm.parse(Answer, messages)
+    out = llm.parse(Answer, messages, TIMEOUT)
     return {"answer": out.answer, "cited": [sid for sid in out.span_ids if sid in s["retrieved"]],  # drop unretrieved IDs
             "turns": [{"q": s["question"], "a": out.answer}]}
 
@@ -97,7 +99,7 @@ def clarify(s: State) -> State:
 g = StateGraph(State)
 for name, fn in [("classify", classify), ("retrieve", retrieve), ("answer", answer),
                  ("read_section", read_section), ("clarify", clarify)]:
-    g.add_node(name, fn)
+    g.add_node(name, fn, retry_policy=RetryPolicy(max_attempts=2, retry_on=llm.TRANSIENT) if name == "answer" else None)
 g.add_edge(START, "classify")
 g.add_conditional_edges("classify", lambda s: s["intent"],
                         {"question": "retrieve", "read_section": "read_section", "unknown": "clarify"})

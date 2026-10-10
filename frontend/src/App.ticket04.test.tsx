@@ -2,8 +2,10 @@
  * Specification tests for ticket 04 UI (review features + editing lock), through the rendered page.
  * fetch is stubbed per route against a small in-memory server; the load stream is fed by hand.
  * Controls are found by accessible name: question input /question/i, Ask, claim select /claim/i,
- * statement input /statement/i, corrected-text textarea /corrected/i, Propose, Accept, Reject,
- * reviewer input /reviewer/i, Approve, Export; the case picker is the combobox named /case/i.
+ * statement input /statement/i, Propose, Accept, Reject, reviewer input /reviewer/i, Approve, Export;
+ * the case picker is the combobox named /case/i.
+ * Ticket 13: there is no corrected-text field; the server stub's proposal (REVISION) stands in for the model's text,
+ * and Propose stays disabled until a statement is typed.
  */
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
@@ -142,8 +144,6 @@ const SHOWN = { ignore: "textarea, script, style" };
 
 async function proposeCorrection(user: ReturnType<typeof userEvent.setup>) {
   await user.type(textbox(/statement/i), STATEMENT);
-  await user.clear(textbox(/corrected/i));
-  await user.type(textbox(/corrected/i), AFTER);
   await user.click(button(/propose/i));
   await screen.findByRole("button", { name: /^accept$/i });
 }
@@ -158,19 +158,21 @@ describe("ticket 04 review features", () => {
   it("locks review controls after the draft event until done", async () => {
     const stream = loadStream();
     stubApi(stream);
-    await startLoad();
+    const user = await startLoad();
     stream.send("extraction_done", { event_count: 3, warnings: [] });
     stream.send("draft", { draft: DRAFT, warnings: [] });
     await screen.findByText("Treated with IV antibiotics.");
 
     const controls = () => [textbox(/question/i), button(/^ask$/i), screen.getByRole("combobox", { name: /claim/i }),
-                            textbox(/statement/i), textbox(/corrected/i), button(/propose/i), textbox(/reviewer/i),
+                            textbox(/statement/i), button(/propose/i), textbox(/reviewer/i),
                             button(/^approve$/i), button(/export/i)] as (HTMLInputElement | HTMLButtonElement)[];
-    await waitFor(() => expect(controls().map((c) => c.disabled)).toEqual(Array(9).fill(true)));
+    await waitFor(() => expect(controls().map((c) => c.disabled)).toEqual(Array(8).fill(true)));
 
     stream.send("done", {});
     stream.close();
-    await waitFor(() => expect(controls().slice(0, 8).map((c) => c.disabled)).toEqual(Array(8).fill(false)));
+    await waitFor(() => expect(textbox(/statement/i).disabled).toBe(false));
+    await user.type(textbox(/statement/i), STATEMENT); // ticket 13: Propose needs a statement
+    await waitFor(() => expect(controls().slice(0, 7).map((c) => c.disabled)).toEqual(Array(7).fill(false)));
     expect(button(/export/i).disabled).toBe(true); // not approved yet
   });
 
@@ -239,11 +241,10 @@ describe("ticket 04 review features", () => {
     const user = await loadReady(stream);
 
     expect((screen.getByRole("combobox", { name: /claim/i }) as HTMLSelectElement).value).toBe("c3"); // first needs_review
-    expect(textbox(/corrected/i).value).toBe(FOLLOW_UP);
     expect(textbox(/reviewer/i).value).toBe(REVIEWER);
     await proposeCorrection(user);
 
-    expect(bodyOf(fetching, "POST /api/sessions/S1/corrections")).toEqual({ claim_id: "c3", after: AFTER, statement: STATEMENT });
+    expect(bodyOf(fetching, "POST /api/sessions/S1/corrections")).toEqual({ claim_id: "c3", statement: STATEMENT });
     const struck = screen.getAllByText(FOLLOW_UP, SHOWN).filter((el) =>
       el.closest("s, del, strike, .line-through") || getComputedStyle(el).textDecoration.includes("line-through"));
     expect(struck).toHaveLength(1); // Before

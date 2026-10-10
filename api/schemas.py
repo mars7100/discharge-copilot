@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class CreateSession(BaseModel):
@@ -10,8 +10,8 @@ class Ask(BaseModel):
 
 
 class Propose(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     claim_id: str
-    after: str
     statement: str
 
 

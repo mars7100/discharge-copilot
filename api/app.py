@@ -13,7 +13,7 @@ from api.schemas import Approve, Ask, CreateSession, Propose, Resolve
 from api.streaming import FIXTURES, run_resume, start, stream_load
 from core.export import to_markdown
 from core.review_graph import ask
-from core.revise import accept, propose
+from core.revise import accept, propose, rewrite
 
 app = FastAPI()
 UI_DIR = Path(os.environ.get("DISCHARGE_UI_DIR", Path(__file__).parent.parent / "frontend" / "dist"))
@@ -97,13 +97,27 @@ def ask_question(session_id: str, body: Ask):
 
 @app.post("/api/sessions/{session_id}/corrections", status_code=201)
 def propose_correction(session_id: str, body: Propose):
+    if not body.statement.strip():
+        raise HTTPException(422, "blank statement")
     with sessions.lock:
         s = reviewable(session_id)
-        if not any(c.claim_id == body.claim_id for c in s["draft"].claims):
+        claim = next((c for c in s["draft"].claims if c.claim_id == body.claim_id), None)
+        if claim is None:
             raise HTTPException(404, f"unknown claim: {body.claim_id}")
         if s["pending"]:
             raise HTTPException(409, "correction pending")
-        rev, clar = propose(s["draft"], body.claim_id, body.after, body.statement, len(s["revisions"]) + 1)
+        draft, spans = s["draft"], s["spans"]
+    try:  # lock released: the model call is slow
+        after = rewrite(claim, spans, body.statement)
+    except Exception as e:
+        raise HTTPException(502, f"correction failed: {type(e).__name__}: {e}")
+    if after is None:
+        raise HTTPException(422, "the statement did not change the claim")
+    with sessions.lock:
+        s = reviewable(session_id)
+        if s["draft"] is not draft or s["pending"]:
+            raise HTTPException(409, "session changed during the proposal")
+        rev, clar = propose(draft, body.claim_id, after, body.statement, len(s["revisions"]) + 1)
         sessions.update(session_id, pending=(rev, clar))
     return {"revision": rev.model_dump(mode="json"), "clarification": clar.model_dump(mode="json")}
 

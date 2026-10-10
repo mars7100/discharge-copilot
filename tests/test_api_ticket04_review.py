@@ -7,7 +7,7 @@ from fastapi import HTTPException
 import api.app
 from api import sessions
 from tests.test_api import calls, client  # noqa: F401  (fixtures)
-from tests.test_api_ticket04 import claim_id, loaded, propose
+from tests.test_api_ticket04 import claim_id, loaded, model_proposes, propose, proposer  # noqa: F401  (ticket 13: the stubbed model proposes)
 
 
 def test_concurrent_accepts_resolve_the_pending_correction_once(client, calls, monkeypatch):

@@ -4,6 +4,9 @@ Setup: a real load with the model stubbed at core.llm.parse (`calls` fixture), s
 draft are the app's own. The draft then gets one discrepancy via api.sessions.update (the stub summarizer
 produces none). Ask is stubbed by monkeypatching the `ask` name in api.app, so api/app.py must call it as a
 module global: `from core.review_graph import ask`.
+
+Ticket 13: the corrected text comes from a model call, so propose posts {claim_id, statement} and the stubbed model
+(the `proposer` fixture of tests/test_ticket13_corrections.py, autouse here) answers with the `after` the helper names.
 """
 import pytest
 
@@ -11,6 +14,7 @@ import api.app
 from api import sessions
 from core.models import Discrepancy, Draft
 from tests.test_api import calls, client, create, load, state  # noqa: F401  (fixtures)
+from tests.test_ticket13_corrections import proposer  # noqa: F401  (fixture)
 
 PREFIX = "/api/sessions"
 SYNTHETIC = "SYNTHETIC DEMONSTRATION — NOT FOR CLINICAL USE"
@@ -31,8 +35,19 @@ def claim_id(client, sid):
     return state(client, sid)["draft"]["claims"][0]["claim_id"]
 
 
+PROPOSER = None  # the current test's model stub (ticket 13)
+
+
+@pytest.fixture(autouse=True)
+def model_proposes(proposer):
+    global PROPOSER
+    PROPOSER = proposer
+
+
 def propose(client, sid, cid, after="Admitted for right lower lobe pneumonia.", statement="It was the right lobe."):
-    return client.post(f"{PREFIX}/{sid}/corrections", json={"claim_id": cid, "after": after, "statement": statement})
+    """`after` is what the stubbed model proposes (ticket 13)."""
+    PROPOSER.after = after
+    return client.post(f"{PREFIX}/{sid}/corrections", json={"claim_id": cid, "statement": statement})
 
 
 def approve(client, sid, reviewer="Dr Test"):
@@ -62,7 +77,7 @@ def asked(monkeypatch):
 # Every operation as (method, path suffix, json body); accept/reject name R01, the first revision id.
 OPERATIONS = {
     "ask": ("post", "/ask", {"question": "Which antibiotic was started?"}),
-    "propose": ("post", "/corrections", {"claim_id": "C01", "after": "x", "statement": "y"}),
+    "propose": ("post", "/corrections", {"claim_id": "C01", "statement": "y"}),
     "accept": ("post", "/corrections/R01/accept", None),
     "reject": ("post", "/corrections/R01/reject", None),
     "approve": ("post", "/approve", {"reviewer": "Dr Test"}),

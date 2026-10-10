@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Alert, Badge, Button, Popover, Select, Spinner, Textarea, TextInput } from "flowbite-react";
+import { Alert, Badge, Button, Popover, Select, Spinner, TextInput } from "flowbite-react";
 import { SseDecoder } from "./sse";
 
 interface Passage { text: string; filename: string; page: number; marker: string }
@@ -130,10 +130,12 @@ export default function App() {
                 {draft.claims.map((c) => <option key={c.claim_id} value={c.claim_id}>{c.claim_id}</option>)}
               </Select>
               <TextInput aria-label="Clinician statement" disabled={off} value={statement} onChange={(e) => setStatement(e.target.value)} />
-              <Textarea aria-label="Corrected text" disabled={off} ref={area} />
-              <Button disabled={off}
-                onClick={() => act<Pending>("corrections", { claim_id: claimId, after: area.current!.value, statement }, (p) => setSnap({ ...snap, pending: p }))}>
-                Propose correction
+              <Button disabled={off || proposing || !statement.trim()} onClick={async () => {
+                setProposing(true);
+                await act<Pending>("corrections", { claim_id: claimId, statement }, (p) => setSnap({ ...snap, pending: p }));
+                setProposing(false);
+              }}>
+                {proposing ? "Proposing…" : "Propose correction"}
               </Button>
             </div>
           )}
@@ -165,7 +167,7 @@ export default function App() {
   const [turns, setTurns] = useState<Turn[]>([]);
   const [question, setQuestion] = useState("");
   const [claimId, setClaimId] = useState("");
-  const area = useRef<HTMLTextAreaElement>(null); // uncontrolled: the claim text is its value, not a text node
+  const [proposing, setProposing] = useState(false);
   const [statement, setStatement] = useState("");
   const [reviewer, setReviewer] = useState("Simulated resident (demo)");
   const [conflicts, setConflicts] = useState<Conflict[] | null>(null); // non-null while the load waits for resolutions
@@ -189,10 +191,6 @@ export default function App() {
     setClaimId(first?.claim_id ?? "");
     setStatement("");
   }
-
-  useEffect(() => {
-    if (area.current) area.current.value = snap?.draft.claims.find((c) => c.claim_id === claimId)?.text ?? "";
-  }, [claimId, snap]);
 
   async function showDraft(sid: string) {
     templateFetch.current ??= api<{ sections: Section[] }>("/api/template").then((t) => t.sections);

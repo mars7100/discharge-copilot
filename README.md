@@ -27,8 +27,8 @@ finish; review controls stay disabled until the load is done. Questions take a f
 2. **Discrepancies**: D01 with both source passages side by side
 3. **Ask about the notes**: "Why do the notes mention different doses?"
 4. Follow-up in the same chat: "What was the reason for the Medication A dose change?"
-5. **Correct a claim**: pick the needs-review claim, enter the 5 mg → 10 mg correction → **Propose correction** →
-   **Accept** (the claim's badge turns green)
+5. **Correct a claim**: pick a claim → type what should change → **Propose correction** → review the proposed text →
+   **Accept** or **Reject**
 6. **Ask about the notes**: "Read the condition at discharge"
 7. **Approve and export**: **Approve** → **Export Markdown**
 
@@ -67,6 +67,6 @@ questions: 6 model calls in total.
 - No retrieval: every question sends all note passages to the model (fine for 6 short notes). **Must be optimized**
   (lightweight RAG) before larger cases.
 - Discrepancy detection relies on the extraction model's `needs_review` flag (one planted conflict).
-- The clinician types the corrected sentence; there is no LLM-drafted edit.
+- The model drafts the corrected claim text from the clinician's statement; the clinician cannot edit it before accepting (reject and restate).
 - No speech input or output.
 - Not HIPAA-compliant or production-grade; human review is required.

@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 36 36">
+  <!-- Mirrors .cp-brand-mark: linear-gradient(140deg, #2563eb, #93c5fd), radius 11px, white ↔ at 21px/800 -->
+  <defs>
+    <linearGradient id="g" gradientUnits="userSpaceOnUse" x1="1.69" y1="-1.43" x2="34.31" y2="37.43">
+      <stop offset="0" stop-color="#2563eb"/>
+      <stop offset="1" stop-color="#93c5fd"/>
+    </linearGradient>
+  </defs>
+  <rect width="36" height="36" rx="11" fill="url(#g)"/>
+  <text x="18" y="18" dy="0.35em" text-anchor="middle" fill="#fff" font-family="Inter, ui-sans-serif, system-ui, sans-serif" font-size="21" font-weight="800">↔</text>
+</svg>

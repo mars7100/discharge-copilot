@@ -1,0 +1,139 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>DischargeCopilot</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+@page { size: 1920px 1080px; margin: 0; }
+* { box-sizing: border-box; margin: 0; }
+body { font-family: Inter, sans-serif; color: #19191d; }
+.s { width: 1920px; height: 1080px; padding: 110px 140px; page-break-after: always; position: relative; overflow: hidden; background: #f6f6f8; display: flex; flex-direction: column; }
+.k { font-size: 26px; font-weight: 700; letter-spacing: 4px; text-transform: uppercase; color: #2563eb; margin-bottom: 28px; }
+h1 { font-size: 92px; font-weight: 800; letter-spacing: -3px; line-height: 1.05; }
+h2 { font-size: 72px; font-weight: 800; letter-spacing: -2.5px; line-height: 1.08; margin-bottom: 56px; max-width: 1500px; }
+p, li { font-size: 36px; line-height: 1.45; color: #3a3b42; }
+ul { padding-left: 0; list-style: none; }
+li { padding-left: 44px; position: relative; margin-bottom: 22px; }
+li:before { content: ''; position: absolute; left: 0; top: 20px; width: 16px; height: 16px; border-radius: 5px; background: linear-gradient(140deg, #2563eb, #93c5fd); }
+.foot { position: absolute; left: 140px; right: 140px; bottom: 56px; display: flex; justify-content: space-between; font-size: 20px; color: #6f707a; }
+.cols { display: grid; grid-template-columns: 1fr 1fr; gap: 56px; }
+.card { background: #fff; border-radius: 28px; padding: 48px; box-shadow: 0 2px 0 #e6e7ec; }
+.card h3 { font-size: 30px; font-weight: 800; margin-bottom: 24px; letter-spacing: -.5px; }
+.stat { font-size: 120px; font-weight: 800; letter-spacing: -4px; color: #2563eb; line-height: 1; margin-bottom: 18px; }
+.src { font-size: 19px; color: #6f707a; margin-top: 22px; line-height: 1.4; }
+.flow { display: flex; gap: 20px; align-items: stretch; margin-bottom: 56px; }
+.step { flex: 1; background: #fff; border-radius: 24px; padding: 34px 30px; box-shadow: 0 2px 0 #e6e7ec; }
+.step b { display: block; font-size: 22px; color: #2563eb; letter-spacing: 2px; margin-bottom: 14px; }
+.step span { font-size: 30px; font-weight: 700; line-height: 1.25; display: block; }
+.note { font-size: 32px; font-weight: 700; padding: 30px 40px; border-left: 8px solid #2563eb; background: #fff; border-radius: 0 20px 20px 0; }
+.title { background: linear-gradient(140deg, #1d4ed8, #2563eb 45%, #93c5fd); color: #fff; justify-content: center; }
+.title h1 { font-size: 150px; letter-spacing: -6px; margin: 40px 0 36px; }
+.title h1 span { font-weight: 400; }
+.title p { color: #e8efff; font-size: 44px; max-width: 1350px; }
+.title .foot { color: #dbe6ff; font-size: 26px; }
+.mark { width: 140px; height: 140px; border-radius: 42px; background: rgba(255,255,255,.18); display: grid; place-items: center; font-size: 84px; font-weight: 800; }
+.demo { display: grid; grid-template-columns: 1.25fr 1fr; gap: 64px; align-items: start; }
+.demo img { width: 100%; border-radius: 22px; box-shadow: 0 20px 60px rgba(25,25,29,.15); }
+ol { padding-left: 0; list-style: none; counter-reset: n; }
+ol li:before { counter-increment: n; content: counter(n); width: 34px; height: 34px; top: 8px; color: #fff; font-size: 20px; font-weight: 800; display: grid; place-items: center; border-radius: 10px; }
+ol li { padding-left: 56px; font-size: 32px; margin-bottom: 18px; }
+.link { font-size: 26px; color: #2563eb; font-weight: 700; margin-top: 30px; word-break: break-all; }
+</style></head><body>
+
+<section class="s title">
+  <div class="mark">↔</div>
+  <h1>discharge<span>copilot</span></h1>
+  <p>An API-first AI copilot that turns clinical notes into source-linked discharge summaries, with the clinician approving every claim.</p>
+  <div class="foot"><span>Team Axel · Axel</span><span>Caribbean AI Summit Healthcare Hackathon · October 2026</span></div>
+</section>
+
+<section class="s">
+  <div class="k">The problem</div>
+  <h2>Residents read every progress note to write one discharge summary.</h2>
+  <div class="cols">
+    <div class="card">
+      <div class="stat" style="font-size:96px">18,754 → 9,492</div>
+      <p>physicians in Puerto Rico, 2009 to 2022. Fewer doctors carry the same documentation load.</p>
+      <div class="src">PR Health Department undersecretary, via News is my Business, May 2022</div>
+    </div>
+    <div class="card">
+      <div class="stat">35 of 41</div>
+      <p>Puerto Rico hospitals had 30-day readmission rates above the U.S. average of 15.3%. The discharge handoff matters.</p>
+      <div class="src">V2A Consulting analysis of CMS Hospital Compare data, December 2019</div>
+    </div>
+  </div>
+  <div class="foot"><span>Challenge from Paul Cordero Villarrubia, resident physician</span><span>2</span></div>
+</section>
+
+<section class="s">
+  <div class="k">The solution</div>
+  <h2>A cited draft the resident can check, correct and approve.</h2>
+  <div class="flow">
+    <div class="step"><b>01</b><span>Read all notes in parallel</span></div>
+    <div class="step"><b>02</b><span>Flag conflicts and ask the resident</span></div>
+    <div class="step"><b>03</b><span>Draft sections, every claim cited</span></div>
+    <div class="step"><b>04</b><span>Ask questions, propose corrections</span></div>
+    <div class="step"><b>05</b><span>Approve and export to Word</span></div>
+  </div>
+  <div class="note">It never guesses between conflicting notes, and nothing is final until a clinician approves it.</div>
+  <div class="foot"><span>Human review at every step</span><span>3</span></div>
+</section>
+
+<section class="s">
+  <div class="k">Demo</div>
+  <h2>From synthetic notes to an approved summary.</h2>
+  <div class="demo">
+    <img src="app.png" alt="DischargeCopilot workspace">
+    <div>
+      <ol>
+        <li>Load a case</li>
+        <li>Resolve a conflict between notes</li>
+        <li>Open a citation to its source</li>
+        <li>Ask a question about the case</li>
+        <li>Correct a claim, review before/after</li>
+        <li>Approve and download Word</li>
+      </ol>
+      <div class="link">dispatch-copilot-z24qhdjsba-uc.a.run.app</div><div class="link" style="margin-top:12px">Backup video: youtu.be/m7dsygF2HG4</div>
+    </div>
+  </div>
+  <div class="foot"><span>Live app on Google Cloud Run</span><span>4</span></div>
+</section>
+
+<section class="s">
+  <div class="k">Technology</div>
+  <h2>How it works, and what is not real yet.</h2>
+  <div class="cols">
+    <div class="card"><h3>How it works</h3><ul>
+      <li>API-first FastAPI backend: the UI is one client</li>
+      <li>LangGraph pipelines run notes and sections in parallel</li>
+      <li>Every cited quote is checked word for word against its source</li>
+      <li>React UI streams the draft and answers</li>
+    </ul></div>
+    <div class="card"><h3>Limitations</h3><ul>
+      <li>Synthetic notes only, no real patient data</li>
+      <li>No EHR integration yet</li>
+      <li>Not HIPAA-compliant or clinically validated yet</li>
+      <li>Voice input not in the current UI</li>
+    </ul></div>
+  </div>
+  <div class="foot"><span>OpenAI structured outputs · python-docx export</span><span>5</span></div>
+</section>
+
+<section class="s">
+  <div class="k">Next steps</div>
+  <h2>From prototype to pilot.</h2>
+  <div class="cols">
+    <div class="card"><h3>Rollout</h3><ul>
+      <li>Pilot with a residency program, starting with the challenge sponsor's team</li>
+      <li>Validate with clinicians on de-identified data</li>
+      <li>HIPAA compliance and EHR integration before real use</li>
+    </ul></div>
+    <div class="card"><h3>Future features</h3><ul>
+      <li>Batch by patient, date range, provider or insurer</li>
+      <li>EHR plugin and white label</li>
+      <li>Voice interaction</li>
+      <li>Plugin store of automations for healthcare professionals</li>
+    </ul></div>
+  </div>
+  <div class="foot"><span>Thank you · Axel</span><span>6</span></div>
+</section>
+
+</body></html>

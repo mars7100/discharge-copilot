@@ -14,7 +14,7 @@ interface Clarification { clarification_id: string; statement: string }
 interface Pending { revision: Revision; clarification: Clarification }
 interface Snap {
   case_id: string; passages: Record<string, Passage>; revisions?: Revision[]; clarifications: Clarification[]
-  pending: Pending | null; resolutions?: Resolution[]
+  pending: Pending | null; resolutions?: Resolution[]; missing_notes?: string[]
   draft: { claims: Claim[]; discrepancies: Discrepancy[]; status: string; approved_at: string | null; reviewer: string | null }
 }
 interface ConflictQuote { span_id: string; quote: string; filename: string; date: string | null; hospital_day: number | null; marker: string; text: string }
@@ -23,7 +23,7 @@ interface Resolution { conflict_id: string; text: string }
 interface Pick { mode: "pick" | "clarify"; span: string; text: string }
 interface Turn { q: string; a?: string; cited: string[]; failed?: string }
 interface EarlyClaim { text: string; evidence_span_ids: string[]; problem?: string | null }
-interface Entry { name: string; seconds: string; details: string[] }
+interface Entry { name: string; seconds: string; details: string[]; id?: string }
 
 const WARNING = "SYNTHETIC DEMONSTRATION — NOT FOR CLINICAL USE";
 const JSON_POST = { method: "POST", headers: { "Content-Type": "application/json" } };
@@ -37,10 +37,11 @@ async function api<T>(path: string, init?: RequestInit): Promise<T> {
   return r.json();
 }
 
-function describe(name: string, d: any): string[] {
+function describe(name: string, d: any, retried: Set<string>): string[] {
   const warnings = (d.warnings ?? []).map(String);
   if (name === "note_extracted") return [`${d.document_id}: ${d.event_count} events`, ...warnings];
-  if (name === "note_failed") return [`${d.document_id}: failed — ${d.detail}`];
+  if (name === "note_retrying") return [`${d.document_id}: retrying`];
+  if (name === "note_failed") return [retried.has(d.document_id) ? `${d.document_id}: failed after retries — draft is missing this note` : `${d.document_id}: failed — ${d.detail}`];
   if (name === "extraction_done") return [`${d.event_count} events`, ...warnings];
   if (name === "draft") return [`${d.draft?.claims?.length ?? 0} claims`, ...warnings];
   if (name === "section_drafted") return [`${d.section_id}: ${d.claims?.length ?? 0} claims`, ...warnings];
@@ -241,12 +242,14 @@ export default function App() {
     const reader = r.body!.getReader();
     const text = new TextDecoder();
     const sse = new SseDecoder();
+    const retried = new Set<string>();
     for (;;) {
       const { done, value } = await reader.read();
       if (done) break;
       for (const f of sse.push(text.decode(value, { stream: true }))) {
         const d = f.data ? JSON.parse(f.data) : {};
-        setEntries((es) => [...es, { name: f.name, seconds: ((Date.now() - t0) / 1000).toFixed(1), details: describe(f.name, d) }]);
+        setEntries((es) => [...es, { name: f.name, seconds: ((Date.now() - t0) / 1000).toFixed(1), details: describe(f.name, d, retried), id: d.document_id }]);
+        if (f.name === "note_retrying") retried.add(d.document_id);
         if (f.name === "error") setError(String(d.detail));
         if (f.name === "done") setReady(true);
         if (f.name === "conflicts_found") { setConflicts(d.conflicts); setPicks({}); setResolveFail(null); }
@@ -324,7 +327,9 @@ export default function App() {
     }
   }
 
-  const step = entries.some((e) => e.name === "draft") ? null : conflicts ? "Waiting for conflict resolution" : entries.some((e) => e.name === "extraction_done") ? "Drafting" : "Extracting";
+  const retrying = !entries.some((e) => e.name === "done") && entries.some((e, i) => e.name === "note_retrying"
+    && !entries.slice(i + 1).some((x) => x.id === e.id && (x.name === "note_extracted" || x.name === "note_failed")));
+  const step = retrying ? "Retrying failed notes" : entries.some((e) => e.name === "draft") ? null : conflicts ? "Waiting for conflict resolution" : entries.some((e) => e.name === "extraction_done") ? "Drafting" : "Extracting";
 
   return (
     <main className="mx-auto max-w-3xl space-y-4 p-4">
@@ -342,6 +347,9 @@ export default function App() {
             <Button size="xs" disabled={running || !session.current} onClick={() => run(session.current)}>Retry</Button>
           </div>
         </Alert>
+      )}
+      {ready && !!snap?.missing_notes?.length && (
+        <Alert color="warning">The draft is missing {snap.missing_notes.length === 1 ? "this note" : "these notes"}: {snap.missing_notes.join(", ")}</Alert>
       )}
       {(running || conflicts) && step && <div className="flex items-center gap-2">{!conflicts && <Spinner size="sm" />}<span>{step}{conflicts ? "" : "…"}</span></div>}
       <ol className="space-y-1 text-sm">

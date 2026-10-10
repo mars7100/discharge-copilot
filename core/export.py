@@ -12,11 +12,14 @@ def marker(span: SourceSpan) -> str:
 
 
 def to_markdown(draft: Draft, spans: dict[str, SourceSpan], documents: list[Document], case_id: str = "case_001",
-                clarifications: list[ClinicianClarification] = (), resolutions: list[Resolution] = ()) -> str:
+                clarifications: list[ClinicianClarification] = (), resolutions: list[Resolution] = (),
+                missing_notes: list[str] = ()) -> str:
     status = (f"APPROVED by {draft.reviewer} at {draft.approved_at:%Y-%m-%d %H:%M}" if draft.status == "approved"
               else "DRAFT — NOT APPROVED")
     out = ["# Discharge summary", "", "**SYNTHETIC DEMONSTRATION — NOT FOR CLINICAL USE**", "",
            f"- Case: {case_id} (fictional)", f"- Status: {status}", f"- Generated: {datetime.now():%Y-%m-%d %H:%M}", ""]
+    if missing_notes:
+        out += [f"**Incomplete: notes not included (extraction failed): {', '.join(missing_notes)}**", ""]
     for section in TEMPLATE:
         claims = [c for c in draft.claims if c.section == section["section_id"]]
         if not claims and section["optional"]:

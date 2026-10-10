@@ -52,7 +52,7 @@ def run_resume(sid: str, events: queue.Queue, answers: list[dict]) -> None:
 
 def finish(sid: str, events: queue.Queue, last: tuple) -> None:
     """load_running is cleared before the last event."""
-    sessions.update(sid, load_running=False, paused=False)
+    sessions.update(sid, load_running=False, paused=False, **({"draft": None} if last[0] == "error" else {}))  # a failed load leaves nothing to edit
     events.put(last)
     events.put(DONE)
 
@@ -60,8 +60,8 @@ def finish(sid: str, events: queue.Queue, last: tuple) -> None:
 def drive(sid: str, events: queue.Queue, graph_input) -> None:
     config = {"configurable": {"thread_id": sessions.get(sid)["load_thread_id"]}}
     for u in load_graph.stream(graph_input, config, stream_mode="updates"):
-        if "extract_note" in u:
-            n = u["extract_note"]["notes"][0]
+        if "extract_note" in u or "retry_note" in u:
+            n = (u["extract_note"]["notes"] if "extract_note" in u else u["retry_note"]["retries"])[0]
             if "detail" in n:
                 events.put(("note_failed", {"document_id": n["document_id"], "detail": n["detail"]}))
             else:
@@ -95,13 +95,21 @@ def drive(sid: str, events: queue.Queue, graph_input) -> None:
             events.put(("dedupe_applied", {"count": len(u["removed"]),
                                            "removed": [c.model_dump(include={"section", "problem", "text"}) for c in u["removed"]]}))
             events.put(("draft", {"draft": u["draft"].model_dump(mode="json"), "warnings": u["draft_warnings"]}))
+            for d in u["to_retry"]:
+                events.put(("note_retrying", {"document_id": d}))
+        elif "redraft_plan" in u:
+            u = u["redraft_plan"]
+            sessions.update(sid, events=u["events"], missing_notes=u["missing_notes"])
+            if "draft" in u:  # nothing to redraft, but a note is missing: a snapshot that says so
+                sessions.update(sid, draft=u["draft"])
+                events.put(("draft", {"draft": u["draft"].model_dump(mode="json"), "warnings": u["draft_warnings"]}))
     finish(sid, events, ("done", {}))
 
 
 def stream_load(sid: str):
     """Marks the load running and starts the worker now (it outlives a disconnect); returns the SSE generator."""
     sessions.update(sid, load_running=True, events=[], draft=None, revisions=[], clarifications=[], pending=None,
-                    conflicts=[], resolutions=[], paused=False, load_thread_id=str(uuid.uuid4()))
+                    conflicts=[], resolutions=[], paused=False, missing_notes=[], load_thread_id=str(uuid.uuid4()))
     return start(run_load, sid)
 
 

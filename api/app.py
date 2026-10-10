@@ -145,7 +145,8 @@ def export(session_id: str):
     s = reviewable(session_id)
     if s["draft"].status != "approved":
         raise HTTPException(409, "not approved")
-    md = to_markdown(s["draft"], s["spans"], s["documents"], case_id=s["case_id"], clarifications=s["clarifications"], resolutions=s["resolutions"])
+    md = to_markdown(s["draft"], s["spans"], s["documents"], case_id=s["case_id"], clarifications=s["clarifications"], resolutions=s["resolutions"],
+                     missing_notes=s["missing_notes"])
     return Response(md, media_type="text/markdown",
                     headers={"Content-Disposition": f'attachment; filename="discharge_summary_{s["case_id"]}.md"'})
 

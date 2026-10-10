@@ -14,7 +14,7 @@ def create(case_id: str) -> str:
         _sessions[sid] = {"session_id": sid, "case_id": case_id, "documents": [], "spans": {}, "events": [],
                           "draft": None, "chat_thread_id": str(uuid.uuid4()), "load_running": False,
                           "revisions": [], "clarifications": [], "pending": None,
-                          "conflicts": [], "resolutions": [], "paused": False, "load_thread_id": None}
+                          "conflicts": [], "resolutions": [], "paused": False, "load_thread_id": None, "missing_notes": []}
     return sid
 
 

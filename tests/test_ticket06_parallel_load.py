@@ -346,14 +346,18 @@ def test_conflict_quotes_validated_with_one_retry(client, model, case):
     assert any("note_09_p01_b01" in w for w in extraction_done["warnings"])  # final errors become warnings
 
 
-def test_one_note_failing_does_not_fail_the_load(client, model, case):
+def test_one_note_failing_does_not_fail_the_load(client, model, case, monkeypatch):
     ids, _ = case
     model.fail = {"note_03"}
+    import core.load_graph  # ticket 11: the failed note is retried after the first draft (no delay here)
+    monkeypatch.setattr(core.load_graph, "RETRY_DELAY", 0, raising=False)
     sid = create(client)
     sse = load(client, sid)
 
     names = [n for n, _ in sse]
-    assert collapse(names[len(ids):]) == ["extraction_done", "sections", "dedupe_applied", "draft", "done"]  # ticket 08: section events
+    # ticket 08: section events; ticket 11: note_03 keeps failing, so its retry ends in note_failed and a final snapshot
+    assert collapse(names[len(ids):]) == ["extraction_done", "sections", "dedupe_applied", "draft",
+                                          "note_retrying", "note_failed", "draft", "done"]
     per_note = {d["document_id"]: (n, d) for n, d in sse[:len(ids)]}
     assert sorted(per_note) == sorted(ids)
     name, failed = per_note.pop("note_03")
